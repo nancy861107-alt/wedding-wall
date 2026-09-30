@@ -1,7 +1,7 @@
 // 婚禮祝福牆設定。supabaseUrl 留空 = 示範模式（資料只存在這台電腦的瀏覽器）。
 export const CONFIG = {
-  supabaseUrl: '',
-  supabaseKey: '',
+  supabaseUrl: 'https://fczxrzzhuoxdohtlxkas.supabase.co',
+  supabaseKey: 'sb_publishable_LOv24p-cWryUSfD5A4nkMg_zG8BhpI7',
   bucket: 'media',
 
   couple: 'Corner & Tsung',
