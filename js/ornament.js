@@ -1,16 +1,9 @@
-// 巴洛克金色雕花：一個角落花飾 symbol，四角鏡射使用。
+// 巴洛克雕花（顏色跟隨 currentColor）：一個角落花飾 symbol，四角鏡射使用。
 const SPRITE = `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <linearGradient id="gilt" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f6e3a8"/>
-      <stop offset=".35" stop-color="#c99a45"/>
-      <stop offset=".6" stop-color="#8a5f22"/>
-      <stop offset=".85" stop-color="#e8c77a"/>
-      <stop offset="1" stop-color="#a87a35"/>
-    </linearGradient>
     <symbol id="corner" viewBox="0 0 140 140">
-      <g fill="none" stroke="url(#gilt)" stroke-linecap="round">
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
         <path d="M5 138V26Q5 5 26 5H138" stroke-width="3"/>
         <path d="M14 138V32Q14 14 32 14H138" stroke-width="1.2"/>
         <path d="M24 24C58 22 70 44 54 58C43 67 30 57 38 47C43 41 51 45 48 51" stroke-width="3.2"/>
@@ -20,7 +13,7 @@ const SPRITE = `
         <path d="M100 16C108 20 112 14 118 14" stroke-width="1.6"/>
         <path d="M16 100C20 108 14 112 14 118" stroke-width="1.6"/>
       </g>
-      <g fill="url(#gilt)">
+      <g fill="currentColor">
         <circle cx="22" cy="22" r="6"/>
         <path d="M58 58l9 3-6 6z"/>
         <circle cx="76" cy="9" r="2.4"/><circle cx="88" cy="9" r="2"/><circle cx="99" cy="9" r="1.6"/>
@@ -28,13 +21,13 @@ const SPRITE = `
       </g>
     </symbol>
     <symbol id="crest" viewBox="0 0 240 60">
-      <g fill="none" stroke="url(#gilt)" stroke-linecap="round" stroke-width="2.4">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.4">
         <path d="M120 50C98 50 90 30 104 22C114 16 124 26 116 32"/>
         <path d="M120 50C142 50 150 30 136 22C126 16 116 26 124 32"/>
         <path d="M100 40C70 44 50 30 20 36C44 26 70 34 92 28"/>
         <path d="M140 40C170 44 190 30 220 36C196 26 170 34 148 28"/>
       </g>
-      <g fill="url(#gilt)"><path d="M120 4l6 12-6 8-6-8z"/><circle cx="20" cy="36" r="3"/><circle cx="220" cy="36" r="3"/></g>
+      <g fill="currentColor"><path d="M120 4l6 12-6 8-6-8z"/><circle cx="20" cy="36" r="3"/><circle cx="220" cy="36" r="3"/></g>
     </symbol>
   </defs>
 </svg>`;

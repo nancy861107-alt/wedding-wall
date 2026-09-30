@@ -5,7 +5,7 @@ export const CONFIG = {
   bucket: 'media',
 
   couple: 'Corner & Tsung',
-  date: '2026 · 11 · 19',
+  date: '19 · XI · 2026',
 
   videoMaxSeconds: 60,
   photoSeconds: 8,        // 大螢幕每張照片停留秒數

@@ -8,42 +8,42 @@
 <link rel="stylesheet" href="css/theme.css">
 <style>
   main { max-width: 980px; margin: 0 auto; padding: 24px 16px 60px; }
-  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid rgba(201,154,69,.4); padding-bottom: 12px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
   header h1 { margin: 0; font-size: 2.4rem; }
-  header .sub { font-size: .95rem; color: var(--gold-lit); }
-  .usage { flex: 1 1 100%; display: flex; align-items: center; gap: 10px; font-size: .85rem; color: rgba(244,231,201,.75); }
-  .usage .meter { flex: 1; max-width: 240px; height: 6px; background: rgba(0,0,0,.4); box-shadow: inset 0 0 0 1px rgba(201,154,69,.6); }
-  .usage .meter div { height: 100%; background: var(--gold); }
+  header .sub { font-size: .95rem; letter-spacing: .2em; }
+  .usage { flex: 1 1 100%; display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--wine-soft); }
+  .usage .meter { flex: 1; max-width: 240px; height: 6px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--line); }
+  .usage .meter div { height: 100%; background: var(--brick); }
 
   nav { display: flex; gap: 6px; margin: 18px 0; }
   nav button { flex: 1; max-width: 160px; padding: 10px; cursor: pointer; font: 600 1rem var(--zh); letter-spacing: .06em;
-    color: var(--gold-lit); background: transparent; border: 1px solid rgba(201,154,69,.5); border-radius: 2px; }
-  nav button[aria-selected="true"] { color: var(--ink); background: linear-gradient(170deg, #f7e6ae, #d8ac58 45%, #b9873a); border-color: transparent; }
+    color: var(--wine); background: transparent; border: 1px solid var(--line); border-radius: 2px; }
+  nav button[aria-selected="true"] { color: var(--paper); background: var(--wine); border-color: var(--wine); }
   nav .n { display: inline-block; min-width: 1.6em; margin-left: 4px; font-size: .8rem; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-  .card { background: rgba(20,2,6,.6); border: 1px solid rgba(201,154,69,.45); display: flex; flex-direction: column; }
-  .card .media { aspect-ratio: 4 / 3; background: #000; }
+  .card { background: rgba(255,255,255,.6); border: 1px solid var(--line); display: flex; flex-direction: column; }
+  .card .media { aspect-ratio: 4 / 3; background: #1d0f0d; }
   .card .media video, .card .media img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .card .body { padding: 10px 12px 4px; flex: 1; }
-  .card .who { margin: 0; font-weight: 600; color: var(--gold-lit); }
+  .card .who { margin: 0; font-weight: 600; }
   .card .msg { margin: 4px 0 0; font-size: .95rem; line-height: 1.6; }
-  .card .meta { margin: 6px 0 0; font-size: .75rem; color: rgba(244,231,201,.5); }
+  .card .meta { margin: 6px 0 0; font-size: .75rem; color: var(--wine-soft); }
   .card .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 12px; }
   .card .btns .plaque { min-height: 44px; padding: 8px; font-size: 1rem; }
   .card.leaving { opacity: .3; pointer-events: none; transition: opacity .3s; }
-  .empty { padding: 60px 20px; text-align: center; color: rgba(244,231,201,.6); border: 1px dashed rgba(201,154,69,.4); }
+  .empty { padding: 60px 20px; text-align: center; color: var(--wine-soft); border: 1px dashed var(--line); }
 
   .login { max-width: 360px; margin: 14vh auto 0; }
   .login h1 { text-align: center; font-size: 2.6rem; margin: 0 0 10px; }
   .login .plaque { margin-top: 24px; }
-  .error { color: #ffb3b3; margin: 12px 0 0; font-size: .95rem; }
+  .error { color: var(--brick); margin: 12px 0 0; font-size: .95rem; }
 </style>
 </head>
 <body>
 <main>
   <form class="login" id="login" hidden>
-    <h1 class="script gold-text">Backstage</h1>
+    <h1 class="script">Backstage</h1>
     <label for="email">Email</label>
     <input id="email" type="email" autocomplete="username" required>
     <label for="pw">密碼</label>
@@ -54,7 +54,7 @@
 
   <div id="panel" hidden>
     <header>
-      <h1 class="script gold-text" data-couple></h1>
+      <h1 class="script" data-couple></h1>
       <span class="sub">祝福審核</span>
       <div class="usage"><span>空間</span><div class="meter"><div id="meter"></div></div><span id="usage-text"></span></div>
     </header>

@@ -1,17 +1,20 @@
 import { CONFIG } from './config.js';
 import { isDemo, addEntry } from './store.js';
-import { crest } from './ornament.js';
+import './ornament.js';
+import { createDrape } from './drape.js';
 
 const $ = (id) => document.getElementById(id);
 document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CONFIG.couple));
 document.querySelectorAll('[data-date]').forEach((el) => (el.textContent = CONFIG.date));
-$('crest-top').innerHTML = crest();
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
 
-setTimeout(() => $('curtain').classList.add('open'), 400);
+const drape = createDrape($('drape'));
+document.body.classList.add('at-home');
+setTimeout(() => drape.open(), 500);
 
 function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
+  document.body.classList.toggle('at-home', id === 's-home');
   window.scrollTo(0, 0);
 }
 function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }

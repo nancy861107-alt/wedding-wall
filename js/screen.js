@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { isDemo, listEntries, onChange } from './store.js';
 import './ornament.js';
+import { createDrape } from './drape.js';
 
 const $ = (id) => document.getElementById(id);
 document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CONFIG.couple));
@@ -137,16 +138,17 @@ async function next() {
 
 /* ---------- 開幕 ---------- */
 let started = false;
+const drape = createDrape($('drape'), { lines: 24, spread: [0.13, 0.05, 0.15], gather: 0.55 });
 $('start').onclick = () => {
-  $('start').remove();
-  $('curtain').classList.add('open');
+  $('start').classList.add('gone');
+  drape.open(3200);
   document.documentElement.requestFullscreen?.().catch(() => {});
   if (CONFIG.musicUrl) { music.src = CONFIG.musicUrl; music.volume = 0.55; music.play().catch(() => {}); }
   setTimeout(() => {
     started = true;
     $('qr-card').hidden = false;
     next();
-  }, 2600);
+  }, 3000);
 };
 
 await refresh();

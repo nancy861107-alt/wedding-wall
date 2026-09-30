@@ -1,7 +1,8 @@
 // 資料層：示範模式用 IndexedDB + BroadcastChannel；正式模式用 Supabase。
 import { CONFIG } from './config.js';
 
-export const isDemo = !CONFIG.supabaseUrl;
+// 網址加 ?demo 可強制用示範模式（本機假資料），方便調整外觀
+export const isDemo = !CONFIG.supabaseUrl || new URLSearchParams(location.search).has('demo');
 
 /* ---------- Supabase ---------- */
 let sbPromise = null;
