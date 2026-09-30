@@ -79,7 +79,7 @@ function fit(media) {
   const [mw, mh] = media.tagName === 'VIDEO' ? [media.videoWidth, media.videoHeight] : [media.naturalWidth, media.naturalHeight];
   if (!mw || !win) return;
   const diff = Math.abs(mw / mh - win.clientWidth / win.clientHeight) / (win.clientWidth / win.clientHeight);
-  media.style.objectFit = diff < 0.2 ? 'cover' : 'contain';
+  media.style.objectFit = diff < 0.45 ? 'cover' : 'contain';
 }
 
 // 把媒體包進下一個畫框；沒有畫框素材時直接顯示
