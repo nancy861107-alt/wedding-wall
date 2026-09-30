@@ -27,6 +27,7 @@ let pending = null; // { kind, blob }
 /* ---------- 錄影 ---------- */
 const MIME_TYPES = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
 let stream = null, recorder = null, chunks = [], facing = 'user', tick = null;
+let mode = 'video'; // 'video' 錄影 | 'photo' 拍照
 
 // 錄成 IG 直式貼文比例 4:5：把鏡頭畫面置中裁切畫到 canvas 再錄
 const OUT_W = 720, OUT_H = 900;
@@ -53,12 +54,12 @@ async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } },
-      audio: { echoCancellation: true, noiseSuppression: true },
+      audio: mode === 'video' ? { echoCancellation: true, noiseSuppression: true } : false,
     });
     $('cam').srcObject = stream;
     $('cam').classList.toggle('mirror', facing === 'user');
   } catch (e) {
-    showError($('cam-error'), '沒辦法開啟相機。請允許相機和麥克風權限；如果是在 LINE 裡打開，請點右上角「⋯」選「用瀏覽器開啟」。也可以回上一頁改用「從相簿選影片」。');
+    showError($('cam-error'), `沒辦法開啟相機。請允許相機${mode === 'video' ? '和麥克風' : ''}權限；如果是在 LINE 裡打開，請點右上角「⋯」選「用瀏覽器開啟」。也可以回上一頁改用「從相簿選照片或影片」。`);
   }
 }
 function stopCamera() {
@@ -83,8 +84,7 @@ function startRecording() {
     const blob = new Blob(chunks, { type: (recorder.mimeType || 'video/mp4').split(';')[0] });
     stopCamera();
     pending = { kind: 'video', blob };
-    $('review').src = URL.createObjectURL(blob);
-    show('s-review');
+    showReview();
   };
   recorder.start(1000);
   let left = CONFIG.videoMaxSeconds;
@@ -102,26 +102,69 @@ function startRecording() {
 
 function resetRecordUI() {
   clearInterval(tick);
+  const photo = mode === 'photo';
   setTimer(CONFIG.videoMaxSeconds, false);
+  $('timer').hidden = photo;
   $('rec-btn').classList.remove('stop');
-  $('rec-btn').setAttribute('aria-label', '開始錄影');
-  $('rec-hint').textContent = `按下紅色按鈕開始錄，最長 ${CONFIG.videoMaxSeconds} 秒`;
+  $('rec-btn').classList.toggle('shutter', photo);
+  $('rec-btn').setAttribute('aria-label', photo ? '拍照' : '開始錄影');
+  $('rec-hint').textContent = photo ? '按下白色按鈕拍照' : `按下紅色按鈕開始錄，最長 ${CONFIG.videoMaxSeconds} 秒`;
+  $('redo').textContent = photo ? '重拍' : '重錄';
+  $('use').textContent = photo ? '用這張' : '用這段';
   $('flip').hidden = false;
 }
 
-$('go-video').onclick = () => { resetRecordUI(); show('s-record'); startCamera(); };
-$('rec-btn').onclick = () => (recorder?.state === 'recording' ? recorder.stop() : startRecording());
+function openCamera(m) { mode = m; resetRecordUI(); show('s-record'); startCamera(); }
+
+// 預覽剛錄好／拍好的內容
+function showReview() {
+  const url = URL.createObjectURL(pending.blob);
+  const isVideo = pending.kind === 'video';
+  $('review').hidden = !isVideo;
+  $('review-img').hidden = isVideo;
+  if (isVideo) $('review').src = url; else $('review-img').src = url;
+  show('s-review');
+}
+
+/* ---------- 拍照：跟錄影一樣裁成 4:5 ---------- */
+const PHOTO_W = 1080, PHOTO_H = 1350;
+function takePhoto() {
+  const cam = $('cam');
+  const vw = cam.videoWidth, vh = cam.videoHeight;
+  if (!vw) return;
+  const c = Object.assign(document.createElement('canvas'), { width: PHOTO_W, height: PHOTO_H });
+  const ctx = c.getContext('2d');
+  const scale = Math.max(PHOTO_W / vw, PHOTO_H / vh);
+  const sw = PHOTO_W / scale, sh = PHOTO_H / scale;
+  // 前鏡頭照片跟預覽畫面一樣左右相反，比較符合自拍習慣
+  if (facing === 'user') { ctx.translate(PHOTO_W, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(cam, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, PHOTO_W, PHOTO_H);
+  $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go');
+  c.toBlob((blob) => {
+    stopCamera();
+    pending = { kind: 'photo', blob };
+    setTimeout(showReview, 250);
+  }, 'image/jpeg', 0.86);
+}
+
+$('go-video').onclick = () => openCamera('video');
+$('go-photo').onclick = () => openCamera('photo');
+$('rec-btn').onclick = () => {
+  if (mode === 'photo') return takePhoto();
+  recorder?.state === 'recording' ? recorder.stop() : startRecording();
+};
 $('flip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; startCamera(); };
 $('rec-cancel').onclick = () => { if (recorder?.state === 'recording') { recorder.onstop = null; recorder.stop(); } clearInterval(drawTimer); stopCamera(); resetRecordUI(); show('s-home'); };
-$('redo').onclick = () => { $('review').pause(); resetRecordUI(); show('s-record'); startCamera(); };
+$('redo').onclick = () => { $('review').pause(); openCamera(mode); };
 $('use').onclick = () => { $('review').pause(); toDetails(); };
 
-/* ---------- 從相簿選影片 ---------- */
-$('pick-video').onclick = () => $('file-video').click();
-$('file-video').onchange = async (e) => {
+/* ---------- 從相簿選照片或影片 ---------- */
+$('pick-file').onclick = () => $('file-pick').click();
+$('file-pick').onchange = async (e) => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
+  if (file.type.startsWith('image/')) return usePhotoFile(file);
   const mb = file.size / 1024 / 1024;
   if (mb > CONFIG.maxUploadMB) {
     alert(`這支影片 ${mb.toFixed(0)}MB，超過上限 ${CONFIG.maxUploadMB}MB。\n請改用「錄一段祝福影片」直接錄，檔案會小很多。`);
@@ -145,19 +188,15 @@ function videoDuration(file) {
   });
 }
 
-/* ---------- 照片（拍照或相簿），先在手機上壓縮 ---------- */
-$('go-photo').onclick = () => $('file-photo').click();
-$('file-photo').onchange = async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
+/* ---------- 相簿照片：先在手機上壓縮 ---------- */
+async function usePhotoFile(file) {
   try {
     pending = { kind: 'photo', blob: await compressImage(file) };
     toDetails();
   } catch {
     alert('這張照片讀不出來，請換一張試試。');
   }
-};
+}
 async function compressImage(file, maxSide = 1600) {
   const url = URL.createObjectURL(file);
   const img = new Image();

@@ -45,6 +45,12 @@
     background: radial-gradient(circle, var(--brick) 0 44%, var(--paper) 45% 55%, var(--wine) 56%);
     box-shadow: 0 4px 14px rgba(110,27,23,.35);
   }
+  /* 拍照模式：白色快門 */
+  .rec-btn.shutter { background: radial-gradient(circle, #fff 0 44%, var(--paper) 45% 55%, var(--wine) 56%); }
+  .rec-btn.shutter:active { transform: scale(.94); }
+  .flash { position: absolute; inset: 0; z-index: 3; background: #fff; opacity: 0; pointer-events: none; }
+  .flash.go { animation: flash .45s ease-out; }
+  @keyframes flash { from { opacity: .9; } to { opacity: 0; } }
   .rec-btn.stop { background: linear-gradient(var(--brick), var(--brick)) center / 26px 26px no-repeat, radial-gradient(circle, var(--paper) 0 55%, var(--wine) 56%); }
   .hint { font-size: .9rem; color: var(--wine-soft); margin: 14px 0 0; }
   .two { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
@@ -82,7 +88,7 @@
       <h1 class="names script" data-couple></h1>
       <p class="date" data-date></p>
     </header>
-    <p class="invite">影片最長 60 秒<br>新人確認後，會在會場大螢幕播出</p>
+    <p class="invite">影片最長 60 秒，也可以拍照<br>新人確認後，會在會場大螢幕播出</p>
     <div class="actions">
       <button class="plaque" id="go-video">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
@@ -91,15 +97,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg>
         拍一張照片</button>
     </div>
-    <p class="alt">已經拍好了？<button class="link" id="pick-video">從相簿選影片</button></p>
-    <input type="file" id="file-photo" accept="image/*" hidden>
-    <input type="file" id="file-video" accept="video/*" hidden>
+    <p class="alt">已經拍好了？<button class="link" id="pick-file">從相簿選照片或影片</button></p>
+    <input type="file" id="file-pick" accept="image/*,video/*" hidden>
   </section>
 
   <!-- 錄影 -->
   <section id="s-record" hidden>
     <div class="viewer gilt">
       <video id="cam" class="mirror" playsinline muted autoplay></video>
+      <div class="flash" id="flash"></div>
       <span class="timer" id="timer">0:60</span>
       <button class="flip" id="flip" aria-label="切換前後鏡頭">⟲</button>
     </div>
@@ -114,7 +120,7 @@
 
   <!-- 錄完預覽 -->
   <section id="s-review" hidden>
-    <div class="viewer gilt"><video id="review" playsinline controls></video></div>
+    <div class="viewer gilt"><video id="review" playsinline controls></video><img id="review-img" alt="剛拍的照片" hidden></div>
     <div class="two">
       <button class="plaque ghost" id="redo">重錄</button>
       <button class="plaque" id="use">用這段</button>
