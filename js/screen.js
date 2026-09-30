@@ -173,7 +173,8 @@ async function showNext() {
   playing = entry;
   const url = await mediaUrl(entry);
   const back = slots[1 - front];
-  back.classList.remove('leave', 'enter');
+  back.classList.remove('leave', 'enter', 'settled');
+  back.classList.toggle('photo', entry.kind === 'photo');
   back.innerHTML = framed(entry.kind === 'video'
     ? `<video playsinline preload="auto"></video>`
     : `<div class="bg"></div><img alt="">`);
@@ -204,7 +205,14 @@ async function showNext() {
     if (!old.classList.contains('on')) { old.innerHTML = ''; old.classList.remove('leave', 'enter'); }
   }, 1200);
 
+  document.body.classList.toggle('showing-photo', entry.kind === 'photo');
   await fxIn(back);
+  if (entry.kind === 'photo') {
+    // 照片先大大地看一下，再縮小、浮現名字和祝福
+    await wait(2200);
+    back.classList.add('settled');
+    await wait(700);
+  }
   $('card').classList.remove('fade');
 
   const cap = FAST ? 5 : Infinity;
@@ -216,7 +224,7 @@ async function showNext() {
     try { await media.play(); } catch { media.muted = true; media.play().catch(() => next()); }
   } else {
     duck(false);
-    timer = setTimeout(next, Math.min(cap, CONFIG.photoSeconds) * 1000);
+    timer = setTimeout(next, Math.min(cap, CONFIG.photoSeconds) * 1000); // 從名字出現後開始算
   }
 }
 
