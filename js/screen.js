@@ -107,9 +107,62 @@ function duck(on) {
   step();
 }
 
+/* ---------- 過場動畫：網址 ?fx=curtain | hang | spot；?fast = 每則只播 5 秒（預覽用） ---------- */
+const params = new URLSearchParams(location.search);
+const FX = params.get('fx') || CONFIG.transition || 'curtain';
+const FAST = params.has('fast');
+document.body.dataset.fx = FX;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 舊的退場；nextName 是下一位賓客（布幕過場時顯示在布幕上）
+async function fxOut(old, nextName) {
+  if (!old.classList.contains('on')) return;          // 第一則沒有舊的
+  if (FX === 'curtain') {
+    $('card').classList.add('fade');
+    await drape.close(1300);
+    $('intermission').textContent = nextName;
+    $('intermission').classList.add('show');
+    await wait(900);
+  } else if (FX === 'hang') {
+    $('card').classList.add('fade');
+    old.classList.add('leave');
+    await wait(650);
+  } else if (FX === 'spot') {
+    $('card').classList.add('fade');
+    $('spot').classList.add('shut');
+    await wait(1000);
+  } else {
+    $('card').classList.add('fade');
+  }
+}
+
+async function fxIn(back) {
+  if (FX === 'curtain') {
+    $('intermission').classList.remove('show');
+    await wait(300);
+    drape.open(1600);
+    await wait(900);
+  } else if (FX === 'hang') {
+    back.classList.add('enter');
+    await wait(500);
+  } else if (FX === 'spot') {
+    $('spot').classList.remove('shut');
+    await wait(500);
+  }
+}
+
+let busy = false, again = false;
 async function next() {
+  if (busy) { again = true; return; }
+  busy = true;
+  try { await showNext(); } finally { busy = false; }
+  if (again) { again = false; next(); }
+}
+
+async function showNext() {
   clearTimeout(timer);
   const entry = pick();
+  const old = slots[front];
   if (!entry) {
     playing = null;
     $('idle').style.opacity = 1;
@@ -120,45 +173,51 @@ async function next() {
   playing = entry;
   const url = await mediaUrl(entry);
   const back = slots[1 - front];
+  back.classList.remove('leave', 'enter');
   back.innerHTML = framed(entry.kind === 'video'
     ? `<video playsinline preload="auto"></video>`
     : `<div class="bg"></div><img alt="">`);
-
+  let media;
   if (entry.kind === 'video') {
-    const v = back.querySelector('video');
-    v.onloadedmetadata = () => fit(v);
-    v.src = url;
-    v.onended = () => next();
-    v.onerror = () => next();
-    timer = setTimeout(next, (CONFIG.videoMaxSeconds + 15) * 1000); // 保險：卡住就跳下一則
-    duck(true);
-    try { await v.play(); } catch { v.muted = true; v.play().catch(() => next()); }
+    media = back.querySelector('video');
+    media.onloadedmetadata = () => fit(media);
+    media.src = url;
   } else {
     back.querySelector('.bg').style.backgroundImage = `url("${url}")`;
-    const img = back.querySelector('.win img');
-    img.onload = () => fit(img);
-    img.src = url;
-    duck(false);
-    timer = setTimeout(next, CONFIG.photoSeconds * 1000);
+    media = back.querySelector('.win img');
+    media.onload = () => fit(media);
+    media.src = url;
   }
 
-  $('idle').style.opacity = 0;
-  $('card').classList.add('fade');
-  setTimeout(() => {
-    $('who').textContent = entry.name;
-    $('msg').textContent = entry.message || '';
-    $('card').classList.remove('fade');
-  }, 500);
+  await fxOut(old, entry.name);
 
+  // 換上新的一則
+  old.querySelectorAll('video').forEach((v) => { v.onended = v.onerror = null; v.pause(); });
+  $('idle').style.opacity = 0;
+  $('who').textContent = entry.name;
+  $('msg').textContent = entry.message || '';
   back.classList.add('on');
-  const old = slots[front];
   old.classList.remove('on');
-  setTimeout(() => {
-    old.querySelectorAll('video').forEach((v) => { v.onended = v.onerror = null; v.pause(); });
-    old.querySelectorAll('.win video, .win img').forEach((m) => m.src.startsWith('blob:') && !isDemo && URL.revokeObjectURL(m.src));
-    if (!old.classList.contains('on')) old.innerHTML = '';
-  }, 1200);
   front = 1 - front;
+  setTimeout(() => {
+    old.querySelectorAll('.win video, .win img').forEach((m) => m.src.startsWith('blob:') && !isDemo && URL.revokeObjectURL(m.src));
+    if (!old.classList.contains('on')) { old.innerHTML = ''; old.classList.remove('leave', 'enter'); }
+  }, 1200);
+
+  await fxIn(back);
+  $('card').classList.remove('fade');
+
+  const cap = FAST ? 5 : Infinity;
+  if (entry.kind === 'video') {
+    media.onended = () => next();
+    media.onerror = () => next();
+    timer = setTimeout(next, Math.min(cap, CONFIG.videoMaxSeconds + 15) * 1000); // 保險：卡住就跳下一則
+    duck(true);
+    try { await media.play(); } catch { media.muted = true; media.play().catch(() => next()); }
+  } else {
+    duck(false);
+    timer = setTimeout(next, Math.min(cap, CONFIG.photoSeconds) * 1000);
+  }
 }
 
 /* ---------- 開幕 ---------- */

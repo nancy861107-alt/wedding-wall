@@ -85,21 +85,25 @@ export function createDrape(host, { lines = 15, color = '#8a1c17', ink = 'rgba(2
   new ResizeObserver(resize).observe(host);
   resize();
 
+  // 從目前狀態動到 target（0 = 關閉，1 = 打開）
+  function animate(target, duration) {
+    return new Promise((resolve) => {
+      const from = current, start = performance.now();
+      const step = (now) => {
+        const p = Math.min(1, (now - start) / duration);
+        current = from + (target - from) * p;
+        draw(current);
+        p < 1 ? requestAnimationFrame(step) : resolve();
+      };
+      requestAnimationFrame(step);
+      // 分頁在背景時 requestAnimationFrame 會暫停，時間到直接跳到終點
+      setTimeout(() => { if (current !== target) { current = target; draw(target); resolve(); } }, duration + 400);
+    });
+  }
+
   return {
-    // 開幕動畫：先中間裂一條縫，再拉開
-    open(duration = 2600) {
-      return new Promise((resolve) => {
-        const start = performance.now();
-        const step = (now) => {
-          current = Math.min(1, (now - start) / duration);
-          draw(current);
-          current < 1 ? requestAnimationFrame(step) : resolve();
-        };
-        requestAnimationFrame(step);
-        // 分頁在背景時 requestAnimationFrame 會暫停，時間到直接打開
-        setTimeout(() => { if (current < 1) { current = 1; draw(1); resolve(); } }, duration + 400);
-      });
-    },
+    open: (duration = 2600) => animate(1, duration),
+    close: (duration = 1400) => animate(0, duration),
     set(t) { current = t; draw(t); },
   };
 }
