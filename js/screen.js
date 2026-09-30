@@ -87,8 +87,8 @@ function framed(inner) {
   const f = frames[frameIndex++ % frames.length];
   if (!f) return `<div class="fbox" style="aspect-ratio:16/9"><div class="win" style="inset:0">${inner}</div></div>`;
   const [x, y, w, h] = f.win.map((v) => `${v * 100}%`);
-  // dx：個別畫框的視覺微調（畫框寬度的比例，負數往左）
-  return `<div class="fbox" style="aspect-ratio:${f.w}/${f.h};translate:${(f.dx || 0) * 100}% 0">
+  // dx：個別畫框的左右微調（畫框寬度的比例，負數往左）；scale：個別畫框縮放
+  return `<div class="fbox" style="aspect-ratio:${f.w}/${f.h};height:${(f.scale || 1) * 100}%;translate:${(f.dx || 0) * 100}% 0">
     <div class="win" style="left:${x};top:${y};width:${w};height:${h};-webkit-mask-image:url(${f.mask});mask-image:url(${f.mask})">${inner}</div>
     <img class="fimg" src="${f.src}" alt=""></div>`;
 }
