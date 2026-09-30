@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>祝福桌卡</title>
+<link rel="stylesheet" href="css/theme.css">
+<style>
+  @page { size: 105mm 148mm; margin: 0; }
+  body { display: grid; place-items: center; min-height: 100vh; padding: 24px 16px; }
+  .card {
+    position: relative; overflow: hidden;
+    width: 105mm; height: 148mm; max-width: 100%;
+    background: var(--paper); box-shadow: 0 10px 40px rgba(60,20,10,.25);
+    display: grid; grid-template-rows: auto auto 1fr auto; justify-items: center; text-align: center;
+    padding: 15mm 17mm 11mm;
+  }
+  .card .drape-host { position: absolute; z-index: 0; }
+  .card > :not(.drape-host) { position: relative; z-index: 1; }
+  .kicker { margin: 0; font: 600 9pt/1.6 var(--zh); letter-spacing: .3em; }
+  .names { margin: 2mm 0 0; font: 30pt/1.05 var(--script); }
+  .date { margin: 1.5mm 0 0; font: italic 500 10.5pt var(--serif); font-variant-numeric: lining-nums; letter-spacing: .25em; }
+  .qr { align-self: center; width: 40mm; padding: 2.5mm; background: #fff; box-shadow: 0 0 0 .3mm var(--wine), 0 0 0 1.4mm var(--paper), 0 0 0 1.7mm var(--line); }
+  .qr svg { display: block; width: 100%; height: auto; }
+  .how { margin: 0; font: 9pt/1.75 var(--zh); }
+  .how b { font-weight: 600; }
+  .tag { margin: 1.5mm 0 0; font: italic 500 10pt var(--serif); letter-spacing: .05em; color: var(--wine-soft); }
+
+  .tools { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .tools .plaque { width: auto; min-height: 46px; padding: 10px 20px; font-size: .95rem; }
+  .tools p { flex-basis: 100%; margin: 0; text-align: center; font-size: .85rem; color: var(--wine-soft); word-break: break-all; }
+
+  @media print {
+    body { display: block; padding: 0; min-height: 0; background: none; }
+    .card { box-shadow: none; }
+    .tools { display: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div>
+  <article class="card">
+    <div class="drape-host" id="drape" aria-hidden="true"></div>
+    <p class="kicker">為我們留下一段祝福</p>
+    <div>
+      <h1 class="names" data-couple></h1>
+      <p class="date" data-date></p>
+    </div>
+    <div class="qr" id="qr"></div>
+    <div>
+      <p class="how">用手機相機掃描<br><b>錄一段祝福影片</b>或<b>拍一張照片</b><br>就會出現在會場大螢幕</p>
+      <p class="tag" id="tag"></p>
+    </div>
+  </article>
+  <div class="tools">
+    <button class="plaque" onclick="print()">列印桌卡</button>
+    <p id="url"></p>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script type="module">
+  import { CONFIG } from './js/config.js';
+  import { createDrape } from './js/drape.js';
+
+  document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CONFIG.couple));
+  document.querySelectorAll('[data-date]').forEach((el) => (el.textContent = CONFIG.date));
+  document.getElementById('tag').textContent = [CONFIG.instagram && `@${CONFIG.instagram}`, CONFIG.hashtag].filter(Boolean).join('  ');
+
+  // 桌卡兩側的布幕
+  const host = document.getElementById('drape');
+  host.style.inset = '0';
+  createDrape(host, { lines: 9, spread: [0.2, 0.05, 0.13], gather: 0.44 }).set(1);
+
+  const guestUrl = new URL('./?openExternalBrowser=1', location.href).href;
+  const qr = qrcode(0, 'M');
+  qr.addData(guestUrl);
+  qr.make();
+  document.getElementById('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  document.getElementById('url').textContent = `QR code 連到：${guestUrl}`;
+</script>
+</body>
+</html>
