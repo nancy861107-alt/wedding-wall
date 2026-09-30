@@ -34,4 +34,8 @@ RLS：anon 只能 insert 狀態為 pending 的資料、只能 select approved；
 2. 推上 GitHub Pages
 3. 每日自動連線，避免專案暫停
 4. 可列印的桌卡 QR code
-5. 真實手機測試（iPhone Safari、Android Chrome、LINE）
+5. 真實手機測試（iPhone Safari、Android Chrome、LINE），含「分享到 IG 限動」
+6. 向 Nancy 要 IG 帳號與 hashtag，填 config.js（目前暫用 #CornerTsungWedding）
+
+## IG
+Nancy 想要「發 IG 限動 + hashtag，大螢幕自動抓」— 不可行（hashtag API 不含限動、私人帳號抓不到、需 Meta App Review）。改為：上傳成功後用 Web Share API 一鍵分享檔案到 IG，並自動複製 @帳號 + hashtag；不支援分享檔案的瀏覽器改顯示「存到手機」下載。

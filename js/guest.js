@@ -8,7 +8,7 @@ document.querySelectorAll('[data-date]').forEach((el) => (el.textContent = CONFI
 $('crest-top').innerHTML = crest();
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
 
-requestAnimationFrame(() => setTimeout(() => $('curtain').classList.add('open'), 300));
+setTimeout(() => $('curtain').classList.add('open'), 400);
 
 function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
@@ -171,6 +171,7 @@ $('form').onsubmit = async (e) => {
   try {
     await addEntry({ name, message: $('msg').value.trim(), kind: pending.kind, blob: pending.blob },
       (p) => ($('bar').style.width = `${Math.round(p * 100)}%`));
+    prepareShare(pending);
     pending = null;
     $('msg').value = '';
     $('count').textContent = '0 / 60';
@@ -182,6 +183,34 @@ $('form').onsubmit = async (e) => {
   }
 };
 $('again').onclick = () => show('s-home');
+
+/* ---------- 分享到 IG 限動 ---------- */
+const tagText = [CONFIG.instagram && `@${CONFIG.instagram}`, CONFIG.hashtag].filter(Boolean).join(' ');
+let shareFile = null;
+
+function prepareShare({ kind, blob }) {
+  const ext = blob.type.includes('webm') ? 'webm' : kind === 'video' ? 'mp4' : 'jpg';
+  shareFile = new File([blob], `${CONFIG.couple.replace(/\W+/g, '')}-wedding.${ext}`, { type: blob.type || (kind === 'video' ? 'video/mp4' : 'image/jpeg') });
+  const canShare = navigator.canShare?.({ files: [shareFile] });
+  $('share-ig').hidden = !canShare;
+  $('save-file').hidden = canShare;
+  if (!canShare) {
+    $('save-file').href = URL.createObjectURL(shareFile);
+    $('save-file').download = shareFile.name;
+  }
+  $('ig-tip').innerHTML = tagText
+    ? `發限動時記得加上 <b>${tagText}</b>${canShare ? '<br>按下按鈕會自動複製，在限動裡長按「貼上」就好' : ''}`
+    : '';
+}
+
+$('share-ig').onclick = async () => {
+  if (tagText) navigator.clipboard?.writeText(tagText).catch(() => {});
+  try {
+    await navigator.share({ files: [shareFile] });
+  } catch (err) {
+    if (err.name !== 'AbortError') $('ig-tip').textContent = '這支手機沒辦法直接分享，請改用「存到手機」再自己發 IG。';
+  }
+};
 
 function petals() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
