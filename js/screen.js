@@ -73,6 +73,15 @@ const slots = [$('slotA'), $('slotB')];
 const frames = await fetch('frames/frames.json').then((r) => r.json()).catch(() => []);
 let frameIndex = 0;
 
+// 比例跟畫框視窗差不多就填滿（裁一點邊），差太多才完整顯示＋模糊背景
+function fit(media) {
+  const win = media.closest('.win');
+  const [mw, mh] = media.tagName === 'VIDEO' ? [media.videoWidth, media.videoHeight] : [media.naturalWidth, media.naturalHeight];
+  if (!mw || !win) return;
+  const diff = Math.abs(mw / mh - win.clientWidth / win.clientHeight) / (win.clientWidth / win.clientHeight);
+  media.style.objectFit = diff < 0.2 ? 'cover' : 'contain';
+}
+
 // 把媒體包進下一個畫框；沒有畫框素材時直接顯示
 function framed(inner) {
   const f = frames[frameIndex++ % frames.length];
@@ -116,6 +125,7 @@ async function next() {
 
   if (entry.kind === 'video') {
     const v = back.querySelector('video');
+    v.onloadedmetadata = () => fit(v);
     v.src = url;
     v.onended = () => next();
     v.onerror = () => next();
@@ -124,7 +134,9 @@ async function next() {
     try { await v.play(); } catch { v.muted = true; v.play().catch(() => next()); }
   } else {
     back.querySelector('.bg').style.backgroundImage = `url("${url}")`;
-    back.querySelector('.win img').src = url;
+    const img = back.querySelector('.win img');
+    img.onload = () => fit(img);
+    img.src = url;
     duck(false);
     timer = setTimeout(next, CONFIG.photoSeconds * 1000);
   }

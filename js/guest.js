@@ -28,12 +28,31 @@ let pending = null; // { kind, blob }
 const MIME_TYPES = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
 let stream = null, recorder = null, chunks = [], facing = 'user', tick = null;
 
+// 錄成 IG 直式貼文比例 4:5：把鏡頭畫面置中裁切畫到 canvas 再錄
+const OUT_W = 720, OUT_H = 900;
+let canvas = null, drawTimer = null;
+function cropStream(src) {
+  if (!HTMLCanvasElement.prototype.captureStream) return src;
+  const cam = $('cam');
+  canvas ??= Object.assign(document.createElement('canvas'), { width: OUT_W, height: OUT_H });
+  const ctx = canvas.getContext('2d');
+  clearInterval(drawTimer);
+  drawTimer = setInterval(() => {
+    const vw = cam.videoWidth, vh = cam.videoHeight;
+    if (!vw) return;
+    const scale = Math.max(OUT_W / vw, OUT_H / vh);
+    const sw = OUT_W / scale, sh = OUT_H / scale;
+    ctx.drawImage(cam, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, OUT_W, OUT_H);
+  }, 1000 / 30);
+  return new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...src.getAudioTracks()]);
+}
+
 async function startCamera() {
   stopCamera();
   showError($('cam-error'), '');
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
+      video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } },
       audio: { echoCancellation: true, noiseSuppression: true },
     });
     $('cam').srcObject = stream;
@@ -55,11 +74,12 @@ function setTimer(sec, live) {
 function startRecording() {
   if (!stream) return;
   const mimeType = MIME_TYPES.find((t) => window.MediaRecorder?.isTypeSupported(t)) || '';
-  recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 1_200_000, audioBitsPerSecond: 96_000 });
+  recorder = new MediaRecorder(cropStream(stream), { mimeType, videoBitsPerSecond: 1_200_000, audioBitsPerSecond: 96_000 });
   chunks = [];
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   recorder.onstop = () => {
     clearInterval(tick);
+    clearInterval(drawTimer);
     const blob = new Blob(chunks, { type: (recorder.mimeType || 'video/mp4').split(';')[0] });
     stopCamera();
     pending = { kind: 'video', blob };
@@ -92,7 +112,7 @@ function resetRecordUI() {
 $('go-video').onclick = () => { resetRecordUI(); show('s-record'); startCamera(); };
 $('rec-btn').onclick = () => (recorder?.state === 'recording' ? recorder.stop() : startRecording());
 $('flip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; startCamera(); };
-$('rec-cancel').onclick = () => { if (recorder?.state === 'recording') { recorder.onstop = null; recorder.stop(); } stopCamera(); resetRecordUI(); show('s-home'); };
+$('rec-cancel').onclick = () => { if (recorder?.state === 'recording') { recorder.onstop = null; recorder.stop(); } clearInterval(drawTimer); stopCamera(); resetRecordUI(); show('s-home'); };
 $('redo').onclick = () => { $('review').pause(); resetRecordUI(); show('s-record'); startCamera(); };
 $('use').onclick = () => { $('review').pause(); toDetails(); };
 
