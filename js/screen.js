@@ -70,6 +70,18 @@ function pick() {
 
 /* ---------- 顯示 ---------- */
 const slots = [$('slotA'), $('slotB')];
+const frames = await fetch('frames/frames.json').then((r) => r.json()).catch(() => []);
+let frameIndex = 0;
+
+// 把媒體包進下一個畫框；沒有畫框素材時直接顯示
+function framed(inner) {
+  const f = frames[frameIndex++ % frames.length];
+  if (!f) return `<div class="fbox" style="aspect-ratio:16/9"><div class="win" style="inset:0">${inner}</div></div>`;
+  const [x, y, w, h] = f.win.map((v) => `${v * 100}%`);
+  return `<div class="fbox" style="aspect-ratio:${f.w}/${f.h}">
+    <div class="win" style="left:${x};top:${y};width:${w};height:${h};-webkit-mask-image:url(${f.mask});mask-image:url(${f.mask})">${inner}</div>
+    <img class="fimg" src="${f.src}" alt=""></div>`;
+}
 let front = 0, timer = null;
 const music = $('music');
 
@@ -98,9 +110,9 @@ async function next() {
   playing = entry;
   const url = await mediaUrl(entry);
   const back = slots[1 - front];
-  back.innerHTML = entry.kind === 'video'
+  back.innerHTML = framed(entry.kind === 'video'
     ? `<video playsinline preload="auto"></video>`
-    : `<div class="bg"></div><img alt="">`;
+    : `<div class="bg"></div><img alt="">`);
 
   if (entry.kind === 'video') {
     const v = back.querySelector('video');
@@ -112,7 +124,7 @@ async function next() {
     try { await v.play(); } catch { v.muted = true; v.play().catch(() => next()); }
   } else {
     back.querySelector('.bg').style.backgroundImage = `url("${url}")`;
-    back.querySelector('img').src = url;
+    back.querySelector('.win img').src = url;
     duck(false);
     timer = setTimeout(next, CONFIG.photoSeconds * 1000);
   }
@@ -130,7 +142,7 @@ async function next() {
   old.classList.remove('on');
   setTimeout(() => {
     old.querySelectorAll('video').forEach((v) => { v.onended = v.onerror = null; v.pause(); });
-    old.querySelectorAll('video, img').forEach((m) => m.src.startsWith('blob:') && !isDemo && URL.revokeObjectURL(m.src));
+    old.querySelectorAll('.win video, .win img').forEach((m) => m.src.startsWith('blob:') && !isDemo && URL.revokeObjectURL(m.src));
     if (!old.classList.contains('on')) old.innerHTML = '';
   }, 1200);
   front = 1 - front;
