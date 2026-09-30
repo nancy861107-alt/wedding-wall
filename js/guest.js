@@ -10,7 +10,9 @@ if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-bann
 
 const drape = createDrape($('drape'));
 document.body.classList.add('at-home');
+// 布幕拉開到七成左右，內容才淡入
 setTimeout(() => drape.open(), 500);
+setTimeout(() => document.body.classList.add('revealed'), 2300);
 
 function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
