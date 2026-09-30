@@ -11,15 +11,15 @@
   #drape { position: absolute; height: 100svh; z-index: 0; transition: opacity .5s; }
   main { position: relative; z-index: 1; }
   body:not(.at-home) #drape { opacity: 0; }
-  main { max-width: 460px; margin: 0 auto; padding: 40px 20px calc(48px + env(safe-area-inset-bottom)); text-align: center; }
-  body.at-home main { padding-top: 13svh; }
+  main { max-width: 460px; margin: 0 auto; padding: 64px 20px calc(48px + env(safe-area-inset-bottom)); text-align: center; }
+  body.at-home main { padding-top: 19svh; }
   section { animation: rise .6s ease both; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 
   .masthead { margin: 0 0 26px; }
   .kicker { font: 600 .82rem/1.6 var(--zh); letter-spacing: .3em; margin: 0; }
   .masthead .names { font-size: clamp(3rem, 15vw, 4.2rem); margin: 10px 0 0; }
-  .masthead .date { font: italic 500 1.15rem var(--serif); letter-spacing: .25em; margin: 8px 0 0; }
+  .masthead .date { font: italic 500 1.15rem var(--serif); font-variant-numeric: lining-nums; letter-spacing: .25em; margin: 8px 0 0; }
   .invite { font-size: 1rem; line-height: 1.9; margin: 0 auto 26px; max-width: 16em; color: var(--wine-soft); }
   .actions { display: grid; gap: 12px; max-width: 260px; margin: 0 auto; }
   .alt { margin-top: 14px; font-size: .92rem; color: var(--wine-soft); }
