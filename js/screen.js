@@ -153,7 +153,7 @@ async function fxIn(back) {
 }
 
 /* ---------- 隨機插圖裝飾：只放在空白紙面，不碰畫框、布幕、名字、QR code ---------- */
-const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 578 }, { src: 'deco/cat2.png', ratio: 666 / 700 }, { src: 'deco/ring.png', ratio: 440 / 700 }];
+const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 578 }, { src: 'deco/cat2.png', ratio: 666 / 700 }, { src: 'deco/ring.png', ratio: 440 / 700, scale: 0.8 }];  // scale：個別插圖縮放
 const rand = (a, b) => a + Math.random() * (b - a);
 const grow = (r, g) => ({ left: r.left - g, right: r.right + g, top: r.top - g, bottom: r.bottom + g });
 const hits = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -181,7 +181,8 @@ function scatterDeco(slot) {
   function tryPlace(S) {
     const placed = [], out = [];
     for (const [side, d] of picks.entries()) {
-      const w = d.ratio >= 1 ? S : S * d.ratio, h = d.ratio >= 1 ? S / d.ratio : S;
+      const size = S * (d.scale || 1);
+      const w = d.ratio >= 1 ? size : size * d.ratio, h = d.ratio >= 1 ? size / d.ratio : size;
       const pad = S * 0.08;                              // 旋轉後外框會大一點
       let ok = false;
       for (let k = 0; k < 60 && !ok; k++) {
