@@ -151,17 +151,34 @@ async function fxIn(back) {
   }
 }
 
-/* ---------- 隨機插圖裝飾：左右兩側各擺一個 ---------- */
-const DECOS = ['deco/bow.png', 'deco/cat.png'];
+/* ---------- 隨機插圖裝飾：畫框左右兩側各擺一個，不碰到畫框、布幕和名字 ---------- */
+const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 665 }];
 const rand = (a, b) => a + Math.random() * (b - a);
-function scatterDeco() {
-  const spots = [
-    { x: [14, 22], y: [18, 70] },   // 左側（vw / vh）
-    { x: [70, 78], y: [16, 56] },   // 右側（避開右下角 QR code）
+function scatterDeco(slot) {
+  const W = innerWidth, H = innerHeight;
+  const box = slot.querySelector('.fbox')?.getBoundingClientRect();
+  if (!box) { $('deco').innerHTML = ''; return; }
+  const gap = H * 0.04;                        // 跟畫框至少留這麼多
+  const curtain = W * 0.17;                    // 布幕收束後大約佔的寬度
+  const top = H * 0.17, bottom = box.bottom - gap;
+  const zones = [
+    { from: curtain, to: box.left - gap },                 // 左側
+    { from: box.right + gap, to: W - curtain, maxBottom: H * 0.68 },  // 右側，避開右下角 QR code
   ];
-  $('deco').innerHTML = spots.map((s, i) => {
-    const src = DECOS[Math.floor(Math.random() * DECOS.length)];
-    return `<img src="${src}" alt="" style="left:${rand(...s.x)}vw;top:${rand(...s.y)}vh;--h:${rand(11, 17)}vh;--r:${rand(-16, 16)}deg;--d:${0.4 + i * 0.35}s">`;
+  // 洗牌後依序發給左右兩側，同一畫面不會出現兩個一樣的圖案
+  const picks = [...DECOS].sort(() => Math.random() - 0.5);
+  $('deco').innerHTML = zones.map((z, i) => {
+    const d = picks[i % picks.length];
+    const room = z.to - z.from;
+    // 旋轉後外框會變大一點，所以寬度多算 15%
+    const h = Math.min(rand(H * 0.11, H * 0.17), room / (d.ratio * 1.15));
+    if (h < H * 0.06) return '';                 // 空間太小就不放
+    const w = h * d.ratio;
+    const x = rand(z.from, z.to - w * 1.15) + w * 0.075;
+    const yMax = Math.min(bottom, z.maxBottom ?? bottom) - h * 1.1;
+    if (yMax <= top) return '';
+    const y = rand(top, yMax);
+    return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${0.4 + i * 0.35}s">`;
   }).join('');
 }
 
@@ -208,13 +225,13 @@ async function showNext() {
 
   // 換上新的一則
   old.querySelectorAll('video').forEach((v) => { v.onended = v.onerror = null; v.pause(); });
-  scatterDeco();
   $('idle').style.opacity = 0;
   $('who').textContent = entry.name;
   $('msg').textContent = entry.message || '';
   back.classList.add('on');
   old.classList.remove('on');
   front = 1 - front;
+  scatterDeco(back);
   setTimeout(() => {
     old.querySelectorAll('.win video, .win img').forEach((m) => m.src.startsWith('blob:') && !isDemo && URL.revokeObjectURL(m.src));
     if (!old.classList.contains('on')) { old.innerHTML = ''; old.classList.remove('leave', 'enter'); }
