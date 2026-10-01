@@ -192,10 +192,14 @@ function scatterDeco(slot) {
       // 每張靠近自己格子的中心，只小幅隨機偏移，插圖之間才會平均、不擠
       const zoneL = side === 0 ? drape.edgeX(box.top + bandH * (i % 3 + 0.5)) + gap : box.right + gap;
       const zoneR = side === 0 ? box.left - gap : W - drape.edgeX(box.top + bandH * (i % 3 + 0.5)) - gap;
-      const cx = (zoneL + zoneR) / 2, cy = box.top + bandH * (i % 3 + 0.5);
+      const cy = box.top + bandH * (i % 3 + 0.5);
+      // 上中下左右錯開（之字形）：上、下靠外側，中間靠畫框；兩側方向相反
+      const half = Math.max(0, (zoneR - zoneL - w) / 2);
+      const outward = side === 0 ? -1 : 1;
+      const cx = (zoneL + zoneR) / 2 + (i % 3 === 1 ? -outward : outward) * half * 0.6;
       for (let k = 0; k < 60 && !ok; k++) {
         const jitter = 0.3 + k / 60;                      // 找不到位置就慢慢放寬偏移範圍
-        const x = cx - w / 2 + rand(-1, 1) * Math.max(0, (zoneR - zoneL - w) / 2) * Math.min(1, jitter);
+        const x = cx - w / 2 + rand(-1, 1) * half * 0.35 * Math.min(1, jitter);
         const y = cy - h / 2 + rand(-1, 1) * Math.max(0, (bandH - h) / 2) * Math.min(1, jitter);
         const r = { left: x - pad, right: x + w + pad, top: y - pad, bottom: y + h + pad };
         if (x < 0 || x + w > W || r.top < 0 || r.bottom > H) continue;
