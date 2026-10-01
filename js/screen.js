@@ -153,7 +153,7 @@ async function fxIn(back) {
 }
 
 /* ---------- 隨機插圖裝飾：只放在空白紙面，不碰畫框、布幕、名字、QR code ---------- */
-const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 665 }, { src: 'deco/cat2.png', ratio: 666 / 700 }];
+const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 578 }, { src: 'deco/cat2.png', ratio: 666 / 700 }];
 const rand = (a, b) => a + Math.random() * (b - a);
 const grow = (r, g) => ({ left: r.left - g, right: r.right + g, top: r.top - g, bottom: r.bottom + g });
 const hits = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -175,25 +175,32 @@ function scatterDeco(slot) {
     }
     return true;
   };
-  const placed = [];
-  const picks = [...DECOS].sort(() => Math.random() - 0.5);   // 同一畫面不重複
-  $('deco').innerHTML = [0, 1].map((side) => {
-    const d = picks[side];
-    // 放在畫框左右兩側、跟畫框差不多高的位置；由大到小試，每個大小隨機試 40 個位置
-    for (let h = rand(H * 0.17, H * 0.21); h >= H * 0.08; h *= 0.9) {
-      const w = h * d.ratio, pad = h * 0.08;            // 旋轉後外框會大一點
-      for (let k = 0; k < 40; k++) {
+  const picks = [...DECOS].sort(() => Math.random() - 0.5).slice(0, 2);   // 同一畫面不重複
+
+  // 每張插圖都塞進同樣大小的正方形，看起來一樣大；兩側都放得下的最大尺寸
+  function tryPlace(S) {
+    const placed = [], out = [];
+    for (const [side, d] of picks.entries()) {
+      const w = d.ratio >= 1 ? S : S * d.ratio, h = d.ratio >= 1 ? S / d.ratio : S;
+      const pad = S * 0.08;                              // 旋轉後外框會大一點
+      let ok = false;
+      for (let k = 0; k < 60 && !ok; k++) {
         const x = side === 0 ? rand(0, box.left - w) : rand(box.right, W - w);
         const y = rand(box.top, Math.max(box.top, box.bottom - h));
         const r = { left: x - pad, right: x + w + pad, top: y - pad, bottom: y + h + pad };
-        if (r.top < 0 || r.bottom > H || x < 0 || x + w > W) continue;
+        if (x < 0 || x + w > W || r.top < 0 || r.bottom > H) continue;
         if (blocks.some((b) => hits(r, b)) || placed.some((b) => hits(r, b)) || !clearOfCurtain(r)) continue;
         placed.push(grow(r, gap));
-        return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${1.2 + side * 0.35}s">`;
+        out.push(`<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-12, 12)}deg;--d:${1.2 + side * 0.35}s">`);
+        ok = true;
       }
+      if (!ok) return null;
     }
-    return '';   // 找不到空位就不放
-  }).join('');
+    return out.join('');
+  }
+  let html = '';
+  for (let S = H * 0.2; S >= H * 0.08 && !html; S *= 0.92) html = tryPlace(S) || '';
+  $('deco').innerHTML = html;    // 兩側都放不下就都不放
 }
 
 // 視窗大小改變（例如接上投影機）就重新擺插圖
