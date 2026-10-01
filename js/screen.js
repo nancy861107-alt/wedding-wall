@@ -153,7 +153,7 @@ async function fxIn(back) {
 }
 
 /* ---------- 隨機插圖裝飾：只放在空白紙面，不碰畫框、布幕、名字、QR code ---------- */
-const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 578 }, { src: 'deco/cat2.png', ratio: 666 / 700 }, { src: 'deco/ring.png', ratio: 440 / 700, scale: 0.8 }, { src: 'deco/doves.png', ratio: 900 / 423, scale: 1.3 }, { src: 'deco/love.png', ratio: 700 / 678 }];  // scale：個別插圖縮放
+const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 578 }, { src: 'deco/cat2.png', ratio: 666 / 700 }, { src: 'deco/ring.png', ratio: 440 / 700, scale: 0.8 }, { src: 'deco/doves.png', ratio: 900 / 423, scale: 1.3 }, { src: 'deco/love.png', ratio: 700 / 678 }, { src: 'deco/bow2.png', ratio: 700 / 622 }];  // scale：個別插圖縮放
 const rand = (a, b) => a + Math.random() * (b - a);
 const grow = (r, g) => ({ left: r.left - g, right: r.right + g, top: r.top - g, bottom: r.bottom + g });
 const hits = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -175,7 +175,7 @@ function scatterDeco(slot) {
     }
     return true;
   };
-  // 6 張全上，順序打亂；左右各 3 張，每側上中下各一張，平均分布
+  // 從所有插圖隨機挑 6 張不重複；左右各 3 張，每側上中下各一張，平均分布
   const picks = [...DECOS].sort(() => Math.random() - 0.5).slice(0, 6);
   const sides = [0, 0, 0, 1, 1, 1];
   const bandH = (box.bottom - box.top) / 3;
