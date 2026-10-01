@@ -50,7 +50,9 @@
   #drape { z-index: 20; }
 
   /* 隨機插圖裝飾（蝴蝶結、貓咪），每換一則重新擺 */
-  .deco { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+  /* 疊在布幕上面（換場時先收起來） */
+  .deco { position: fixed; inset: 0; z-index: 21; pointer-events: none; transition: opacity .4s; }
+  .deco.away { opacity: 0; }
   .deco img { position: absolute; height: var(--h); rotate: var(--r); opacity: 0;
     filter: drop-shadow(0 .6vh .8vh rgba(80,20,10,.15));
     animation: deco-in .9s cubic-bezier(.3,1.4,.5,1) var(--d) forwards, deco-float 6s ease-in-out calc(var(--d) + .9s) infinite alternate; }

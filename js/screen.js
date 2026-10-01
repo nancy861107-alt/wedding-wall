@@ -117,6 +117,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // 舊的退場；nextName 是下一位賓客（布幕過場時顯示在布幕上）
 async function fxOut(old, nextName) {
   if (!old.classList.contains('on')) return;          // 第一則沒有舊的
+  $('deco').classList.add('away');                     // 插圖先收起來
   if (FX === 'curtain') {
     $('card').classList.add('fade');
     await drape.close(1300);
@@ -159,7 +160,8 @@ function scatterDeco(slot) {
   const box = slot.querySelector('.fbox')?.getBoundingClientRect();
   if (!box) { $('deco').innerHTML = ''; return; }
   const gap = H * 0.04;                        // 跟畫框至少留這麼多
-  const curtain = W * 0.17;                    // 布幕收束後大約佔的寬度
+  // 先試著放在布幕內側；畫面太窄放不下時，允許疊在布幕上
+  const curtain = box.left - W * 0.17 > H * 0.12 ? W * 0.17 : W * 0.03;
   const top = H * 0.17, bottom = box.bottom - gap;
   const zones = [
     { from: curtain, to: box.left - gap },                 // 左側
@@ -178,7 +180,7 @@ function scatterDeco(slot) {
     const yMax = Math.min(bottom, z.maxBottom ?? bottom) - h * 1.1;
     if (yMax <= top) return '';
     const y = rand(top, yMax);
-    return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${0.4 + i * 0.35}s">`;
+    return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${1.2 + i * 0.35}s">`;
   }).join('');
 }
 
@@ -232,6 +234,7 @@ async function showNext() {
   old.classList.remove('on');
   front = 1 - front;
   scatterDeco(back);
+  $('deco').classList.remove('away');
   setTimeout(() => {
     old.querySelectorAll('.win video, .win img').forEach((m) => m.src.startsWith('blob:') && !isDemo && URL.revokeObjectURL(m.src));
     if (!old.classList.contains('on')) { old.innerHTML = ''; old.classList.remove('leave', 'enter'); }
