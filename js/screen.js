@@ -152,35 +152,47 @@ async function fxIn(back) {
   }
 }
 
-/* ---------- 隨機插圖裝飾：畫框左右兩側各擺一個，不碰到畫框、布幕和名字 ---------- */
+/* ---------- 隨機插圖裝飾：只放在空白紙面，不碰畫框、布幕、名字、QR code ---------- */
 const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 665 }];
 const rand = (a, b) => a + Math.random() * (b - a);
+const grow = (r, g) => ({ left: r.left - g, right: r.right + g, top: r.top - g, bottom: r.bottom + g });
+const hits = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+
 function scatterDeco(slot) {
-  const W = innerWidth, H = innerHeight;
+  const W = innerWidth, H = innerHeight, gap = H * 0.03;
   const box = slot.querySelector('.fbox')?.getBoundingClientRect();
   if (!box) { $('deco').innerHTML = ''; return; }
-  const gap = H * 0.04;                        // 跟畫框至少留這麼多
-  // 先試著放在布幕內側；畫面太窄放不下時，允許疊在布幕上
-  const curtain = box.left - W * 0.17 > H * 0.12 ? W * 0.17 : W * 0.03;
-  const top = H * 0.17, bottom = box.bottom - gap;
-  const zones = [
-    { from: curtain, to: box.left - gap },                 // 左側
-    { from: box.right + gap, to: W - curtain, maxBottom: H * 0.68 },  // 右側，避開右下角 QR code
-  ];
-  // 洗牌後依序發給左右兩側，同一畫面不會出現兩個一樣的圖案
-  const picks = [...DECOS].sort(() => Math.random() - 0.5);
-  $('deco').innerHTML = zones.map((z, i) => {
-    const d = picks[i % picks.length];
-    const room = z.to - z.from;
-    // 旋轉後外框會變大一點，所以寬度多算 15%
-    const h = Math.min(rand(H * 0.11, H * 0.17), room / (d.ratio * 1.15));
-    if (h < H * 0.06) return '';                 // 空間太小就不放
-    const w = h * d.ratio;
-    const x = rand(z.from, z.to - w * 1.15) + w * 0.075;
-    const yMax = Math.min(bottom, z.maxBottom ?? bottom) - h * 1.1;
-    if (yMax <= top) return '';
-    const y = rand(top, yMax);
-    return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${1.2 + i * 0.35}s">`;
+  const card = $('card').getBoundingClientRect();
+  // 名字區在照片模式會往上移 5vh，兩個位置都避開
+  const cardZone = { left: card.left, right: card.right, top: card.top - H * 0.05, bottom: card.bottom, width: card.width };
+  const blocks = [box, cardZone, document.querySelector('.heading .names').getBoundingClientRect(), $('qr-card').getBoundingClientRect()]
+    .filter((r) => r.width).map((r) => grow(r, gap));
+  const clearOfCurtain = (r) => {
+    for (let i = 0; i <= 6; i++) {
+      const y = r.top + ((r.bottom - r.top) * i) / 6;
+      const e = drape.edgeX(y) + gap;
+      if (r.left < e || r.right > W - e) return false;
+    }
+    return true;
+  };
+  const placed = [];
+  const picks = [...DECOS].sort(() => Math.random() - 0.5);   // 同一畫面不重複
+  $('deco').innerHTML = [0, 1].map((side) => {
+    const d = picks[side];
+    // 由大到小試，每個大小隨機試 40 個位置
+    for (let h = rand(H * 0.13, H * 0.18); h >= H * 0.06; h *= 0.85) {
+      const w = h * d.ratio, pad = h * 0.08;            // 旋轉後外框會大一點
+      for (let k = 0; k < 40; k++) {
+        const x = side === 0 ? rand(0, W / 2 - w) : rand(W / 2, W - w);
+        const y = rand(H * 0.05, H - h);
+        const r = { left: x - pad, right: x + w + pad, top: y - pad, bottom: y + h + pad };
+        if (r.top < 0 || r.bottom > H) continue;
+        if (blocks.some((b) => hits(r, b)) || placed.some((b) => hits(r, b)) || !clearOfCurtain(r)) continue;
+        placed.push(grow(r, gap));
+        return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${1.2 + side * 0.35}s">`;
+      }
+    }
+    return '';   // 找不到空位就不放
   }).join('');
 }
 
@@ -233,6 +245,7 @@ async function showNext() {
   back.classList.add('on');
   old.classList.remove('on');
   front = 1 - front;
+  document.body.classList.toggle('showing-photo', entry.kind === 'photo');
   scatterDeco(back);
   $('deco').classList.remove('away');
   setTimeout(() => {

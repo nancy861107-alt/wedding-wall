@@ -101,7 +101,24 @@ export function createDrape(host, { lines = 15, color = '#8a1c17', ink = 'rgba(2
     });
   }
 
+  // 打開後，左片布幕在高度 y 的內側邊界（px）；右片對稱 = W - edgeX(y)
+  function edgeX(y) {
+    const yMid = H * gather;
+    const top = W * spread[0], mid = W * spread[1], bot = W * spread[2];
+    const bez = (p0, p1, p2, p3, t) => (1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t * t * p2 + t ** 3 * p3;
+    const seg = y <= yMid
+      ? [[top, top, mid, mid], [0, yMid * 0.35, yMid * 0.7, yMid]]
+      : [[mid, mid, bot, bot], [yMid, yMid * 1.3, yMid + (H - yMid) * 0.6, H]];
+    let best = seg[0][0], bestD = Infinity;
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40, yy = bez(...seg[1], t);
+      if (Math.abs(yy - y) < bestD) { bestD = Math.abs(yy - y); best = bez(...seg[0], t); }
+    }
+    return best;
+  }
+
   return {
+    edgeX,
     open: (duration = 2600) => animate(1, duration),
     close: (duration = 1400) => animate(0, duration),
     set(t) { current = t; draw(t); },
