@@ -175,12 +175,14 @@ function scatterDeco(slot) {
     }
     return true;
   };
-  const picks = [...DECOS].sort(() => Math.random() - 0.5).slice(0, 2);   // 同一畫面不重複
+  const picks = [...DECOS].sort(() => Math.random() - 0.5).slice(0, 3);   // 一次 3 張，同一畫面不重複
+  const sides = [0, 1, Math.random() < 0.5 ? 0 : 1];                     // 左、右，第三張隨機一側
 
-  // 每張插圖都塞進同樣大小的正方形，看起來一樣大；兩側都放得下的最大尺寸
+  // 每張插圖都塞進同樣大小的正方形，看起來一樣大；三張都放得下的最大尺寸
   function tryPlace(S) {
     const placed = [], out = [];
-    for (const [side, d] of picks.entries()) {
+    for (const [i, d] of picks.entries()) {
+      const side = sides[i];
       const size = S * (d.scale || 1);
       const w = d.ratio >= 1 ? size : size * d.ratio, h = d.ratio >= 1 ? size / d.ratio : size;
       const pad = S * 0.08;                              // 旋轉後外框會大一點
@@ -192,7 +194,7 @@ function scatterDeco(slot) {
         if (x < 0 || x + w > W || r.top < 0 || r.bottom > H) continue;
         if (blocks.some((b) => hits(r, b)) || placed.some((b) => hits(r, b)) || !clearOfCurtain(r)) continue;
         placed.push(grow(r, gap));
-        out.push(`<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-12, 12)}deg;--d:${1.2 + side * 0.35}s">`);
+        out.push(`<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-12, 12)}deg;--d:${1.2 + i * 0.3}s">`);
         ok = true;
       }
       if (!ok) return null;
@@ -200,8 +202,8 @@ function scatterDeco(slot) {
     return out.join('');
   }
   let html = '';
-  for (let S = H * 0.2; S >= H * 0.08 && !html; S *= 0.92) html = tryPlace(S) || '';
-  $('deco').innerHTML = html;    // 兩側都放不下就都不放
+  for (let S = H * 0.15; S >= H * 0.07 && !html; S *= 0.92) html = tryPlace(S) || '';
+  $('deco').innerHTML = html;    // 三張都放不下就都不放
 }
 
 // 視窗大小改變（例如接上投影機）就重新擺插圖
