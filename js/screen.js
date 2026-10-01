@@ -175,10 +175,12 @@ function scatterDeco(slot) {
     }
     return true;
   };
-  const picks = [...DECOS].sort(() => Math.random() - 0.5).slice(0, 3);   // 一次 3 張，同一畫面不重複
-  const sides = [0, 1, Math.random() < 0.5 ? 0 : 1];                     // 左、右，第三張隨機一側
+  // 6 張全上，順序打亂；左右各 3 張，每側上中下各一張，平均分布
+  const picks = [...DECOS].sort(() => Math.random() - 0.5).slice(0, 6);
+  const sides = [0, 0, 0, 1, 1, 1];
+  const bandH = (box.bottom - box.top) / 3;
 
-  // 每張插圖都塞進同樣大小的正方形，看起來一樣大；三張都放得下的最大尺寸
+  // 每張插圖都塞進同樣大小的正方形，看起來一樣大；全部都放得下的最大尺寸
   function tryPlace(S) {
     const placed = [], out = [];
     for (const [i, d] of picks.entries()) {
@@ -187,14 +189,19 @@ function scatterDeco(slot) {
       const w = d.ratio >= 1 ? size : size * d.ratio, h = d.ratio >= 1 ? size / d.ratio : size;
       const pad = S * 0.08;                              // 旋轉後外框會大一點
       let ok = false;
+      // 每張靠近自己格子的中心，只小幅隨機偏移，插圖之間才會平均、不擠
+      const zoneL = side === 0 ? drape.edgeX(box.top + bandH * (i % 3 + 0.5)) + gap : box.right + gap;
+      const zoneR = side === 0 ? box.left - gap : W - drape.edgeX(box.top + bandH * (i % 3 + 0.5)) - gap;
+      const cx = (zoneL + zoneR) / 2, cy = box.top + bandH * (i % 3 + 0.5);
       for (let k = 0; k < 60 && !ok; k++) {
-        const x = side === 0 ? rand(0, box.left - w) : rand(box.right, W - w);
-        const y = rand(box.top, Math.max(box.top, box.bottom - h));
+        const jitter = 0.3 + k / 60;                      // 找不到位置就慢慢放寬偏移範圍
+        const x = cx - w / 2 + rand(-1, 1) * Math.max(0, (zoneR - zoneL - w) / 2) * Math.min(1, jitter);
+        const y = cy - h / 2 + rand(-1, 1) * Math.max(0, (bandH - h) / 2) * Math.min(1, jitter);
         const r = { left: x - pad, right: x + w + pad, top: y - pad, bottom: y + h + pad };
         if (x < 0 || x + w > W || r.top < 0 || r.bottom > H) continue;
         if (blocks.some((b) => hits(r, b)) || placed.some((b) => hits(r, b)) || !clearOfCurtain(r)) continue;
-        placed.push(grow(r, gap));
-        out.push(`<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-12, 12)}deg;--d:${1.2 + i * 0.3}s">`);
+        placed.push(grow(r, S * 0.5));                  // 插圖之間至少隔半張插圖
+        out.push(`<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-12, 12)}deg;--d:${1.2 + (i % 3) * 0.25 + side * 0.12}s">`);
         ok = true;
       }
       if (!ok) return null;
@@ -202,8 +209,8 @@ function scatterDeco(slot) {
     return out.join('');
   }
   let html = '';
-  for (let S = H * 0.15; S >= H * 0.07 && !html; S *= 0.92) html = tryPlace(S) || '';
-  $('deco').innerHTML = html;    // 三張都放不下就都不放
+  for (let S = H * 0.14; S >= H * 0.06 && !html; S *= 0.92) html = tryPlace(S) || '';
+  $('deco').innerHTML = html;    // 放不下就都不放
 }
 
 // 視窗大小改變（例如接上投影機）就重新擺插圖
