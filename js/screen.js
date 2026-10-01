@@ -153,7 +153,7 @@ async function fxIn(back) {
 }
 
 /* ---------- 隨機插圖裝飾：只放在空白紙面，不碰畫框、布幕、名字、QR code ---------- */
-const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 665 }];
+const DECOS = [{ src: 'deco/bow.png', ratio: 700 / 530 }, { src: 'deco/cat.png', ratio: 700 / 665 }, { src: 'deco/cat2.png', ratio: 666 / 700 }];
 const rand = (a, b) => a + Math.random() * (b - a);
 const grow = (r, g) => ({ left: r.left - g, right: r.right + g, top: r.top - g, bottom: r.bottom + g });
 const hits = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -179,14 +179,14 @@ function scatterDeco(slot) {
   const picks = [...DECOS].sort(() => Math.random() - 0.5);   // 同一畫面不重複
   $('deco').innerHTML = [0, 1].map((side) => {
     const d = picks[side];
-    // 由大到小試，每個大小隨機試 40 個位置
-    for (let h = rand(H * 0.13, H * 0.18); h >= H * 0.06; h *= 0.85) {
+    // 放在畫框左右兩側、跟畫框差不多高的位置；由大到小試，每個大小隨機試 40 個位置
+    for (let h = rand(H * 0.22, H * 0.28); h >= H * 0.08; h *= 0.9) {
       const w = h * d.ratio, pad = h * 0.08;            // 旋轉後外框會大一點
       for (let k = 0; k < 40; k++) {
-        const x = side === 0 ? rand(0, W / 2 - w) : rand(W / 2, W - w);
-        const y = rand(H * 0.05, H - h);
+        const x = side === 0 ? rand(0, box.left - w) : rand(box.right, W - w);
+        const y = rand(box.top, Math.max(box.top, box.bottom - h));
         const r = { left: x - pad, right: x + w + pad, top: y - pad, bottom: y + h + pad };
-        if (r.top < 0 || r.bottom > H) continue;
+        if (r.top < 0 || r.bottom > H || x < 0 || x + w > W) continue;
         if (blocks.some((b) => hits(r, b)) || placed.some((b) => hits(r, b)) || !clearOfCurtain(r)) continue;
         placed.push(grow(r, gap));
         return `<img src="${d.src}" alt="" style="left:${x}px;top:${y}px;--h:${h}px;--r:${rand(-14, 14)}deg;--d:${1.2 + side * 0.35}s">`;
@@ -195,6 +195,13 @@ function scatterDeco(slot) {
     return '';   // 找不到空位就不放
   }).join('');
 }
+
+// 視窗大小改變（例如接上投影機）就重新擺插圖
+let resizeTimer;
+addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => started && slots[front].classList.contains('on') && scatterDeco(slots[front]), 300);
+});
 
 let busy = false, again = false;
 async function next() {
