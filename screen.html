@@ -49,6 +49,14 @@
 
   #drape { z-index: 20; }
 
+  /* 隨機插圖裝飾（蝴蝶結、貓咪），每換一則重新擺 */
+  .deco { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+  .deco img { position: absolute; height: var(--h); rotate: var(--r); opacity: 0;
+    filter: drop-shadow(0 .6vh .8vh rgba(80,20,10,.15));
+    animation: deco-in .9s cubic-bezier(.3,1.4,.5,1) var(--d) forwards, deco-float 6s ease-in-out calc(var(--d) + .9s) infinite alternate; }
+  @keyframes deco-in { from { opacity: 0; scale: .4; } to { opacity: 1; scale: 1; } }
+  @keyframes deco-float { from { translate: 0 0; } to { translate: 0 -1.4vh; } }
+
   /* 過場：布幕關上時浮現下一位賓客名字 */
   .intermission { position: fixed; inset: 0; z-index: 22; display: grid; place-content: center; pointer-events: none;
     font: 7vh/1.3 'LXGW WenKai TC', var(--zh); letter-spacing: .1em; color: var(--cream); text-shadow: 0 .4vh 2vh rgba(40,0,0,.5);
@@ -83,6 +91,7 @@
 </style>
 </head>
 <body>
+<div class="deco" id="deco" aria-hidden="true"></div>
 <div class="stage">
   <div class="heading"><h1 class="names script" data-couple></h1></div>
   <div class="frame" id="frame">

@@ -151,6 +151,20 @@ async function fxIn(back) {
   }
 }
 
+/* ---------- 隨機插圖裝飾：左右兩側各擺一個 ---------- */
+const DECOS = ['deco/bow.png', 'deco/cat.png'];
+const rand = (a, b) => a + Math.random() * (b - a);
+function scatterDeco() {
+  const spots = [
+    { x: [14, 22], y: [18, 70] },   // 左側（vw / vh）
+    { x: [70, 78], y: [16, 56] },   // 右側（避開右下角 QR code）
+  ];
+  $('deco').innerHTML = spots.map((s, i) => {
+    const src = DECOS[Math.floor(Math.random() * DECOS.length)];
+    return `<img src="${src}" alt="" style="left:${rand(...s.x)}vw;top:${rand(...s.y)}vh;--h:${rand(11, 17)}vh;--r:${rand(-16, 16)}deg;--d:${0.4 + i * 0.35}s">`;
+  }).join('');
+}
+
 let busy = false, again = false;
 async function next() {
   if (busy) { again = true; return; }
@@ -194,6 +208,7 @@ async function showNext() {
 
   // 換上新的一則
   old.querySelectorAll('video').forEach((v) => { v.onended = v.onerror = null; v.pause(); });
+  scatterDeco();
   $('idle').style.opacity = 0;
   $('who').textContent = entry.name;
   $('msg').textContent = entry.message || '';
