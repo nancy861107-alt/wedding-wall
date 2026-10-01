@@ -180,7 +180,7 @@ function scatterDeco(slot) {
   $('deco').innerHTML = [0, 1].map((side) => {
     const d = picks[side];
     // 放在畫框左右兩側、跟畫框差不多高的位置；由大到小試，每個大小隨機試 40 個位置
-    for (let h = rand(H * 0.22, H * 0.28); h >= H * 0.08; h *= 0.9) {
+    for (let h = rand(H * 0.17, H * 0.21); h >= H * 0.08; h *= 0.9) {
       const w = h * d.ratio, pad = h * 0.08;            // 旋轉後外框會大一點
       for (let k = 0; k < 40; k++) {
         const x = side === 0 ? rand(0, box.left - w) : rand(box.right, W - w);
