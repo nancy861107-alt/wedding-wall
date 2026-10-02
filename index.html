@@ -33,8 +33,7 @@
   .pframe { position: relative; background: none; }
   /* 取景框盡量放大：左右幾乎貼齊螢幕 */
   .viewer.pframe { margin: 0 -20px 16px; }
-  /* 畫框寬度：手機貼齊螢幕；iPad 直立時依螢幕高度放到最大，下面留位置給按鈕 */
-  body:not(.at-home) main { padding-top: 10px; padding-bottom: 16px; max-width: min(100vw, calc((100svh - 230px) * 0.82)); }
+  body:not(.at-home) main { padding-top: 10px; max-width: 540px; }
   .pframe .win { position: absolute; overflow: hidden; background: #1d0f0d; }
   .pframe .win video, .pframe .win img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .pframe .pf-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none;
@@ -86,21 +85,6 @@
   .ig-tip { margin: 0; font-size: .9rem; line-height: 1.7; color: var(--wine-soft); }
   .ig-tip b { color: var(--wine); font-weight: 600; user-select: all; }
   .error { color: var(--brick-deep); background: #f6dcd6; border: 1px solid rgba(138,28,23,.4); padding: 10px 14px; margin: 16px 0 0; font-size: .95rem; text-align: left; }
-
-  /* iPad 直立（或更寬的螢幕）：整體放大 */
-  @media (min-width: 700px) {
-    html { font-size: 23px; }
-    body.at-home main { max-width: 640px; }
-    .actions { max-width: 400px; }
-    .plaque { min-height: 84px; }
-    .rec-btn { width: 108px; height: 108px; }
-    .rec-btn.stop { background-size: 38px 38px, auto; }
-    .rec-row { gap: 44px; }
-    .timer { font-size: 1.3rem; padding: 6px 20px; top: 20px; }
-    .flip { width: 64px; height: 64px; font-size: 1.6rem; right: 20px; bottom: 20px; }
-    .thumb { width: 36%; }
-    form { max-width: 560px; margin: 0 auto; }
-  }
 
   .petal { position: fixed; top: -30px; z-index: 30; width: 12px; height: 15px; pointer-events: none;
     background: var(--brick); border-radius: 60% 0 60% 0; animation: fall linear forwards; }
