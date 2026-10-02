@@ -17,7 +17,24 @@ if (!RECORD) {
   document.title = '大家的祝福';
 }
 
-const drape = createDrape($('drape'));
+const drape = createDrape($('drape'), { spread: [0.27, 0.10, 0.22] });
+
+// 首頁按鈕和連結的寬度，依它們所在高度的布幕開口來縮，不要壓到布幕
+function fitToCurtain() {
+  if ($('s-home').hidden) return;
+  for (const el of document.querySelectorAll('#s-home .actions, #s-home .alt, #s-home .invite')) {
+    el.style.maxWidth = '';
+    const r = el.getBoundingClientRect();
+    if (!r.height) continue;
+    let edge = 0;
+    for (let i = 0; i <= 4; i++) edge = Math.max(edge, drape.edgeX(r.top + scrollY + (r.height * i) / 4));
+    const room = innerWidth - 2 * (edge + 14);
+    if (room < r.width) el.style.maxWidth = `${Math.max(170, room)}px`;
+  }
+}
+addEventListener('resize', fitToCurtain);
+document.fonts?.ready.then(fitToCurtain);
+setTimeout(fitToCurtain, 2400);
 document.body.classList.add('at-home');
 // 布幕拉開到七成左右，內容才淡入
 setTimeout(() => drape.open(), 500);
@@ -57,6 +74,7 @@ function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
   scatterMinis($(id));
   document.body.classList.toggle('at-home', id === 's-home');
+  if (id === 's-home') requestAnimationFrame(fitToCurtain);
   if (id !== 's-home') stopFilmVideos();   // 離開首頁就停掉膠卷裡正在播的影片
   window.scrollTo(0, 0);
 }
