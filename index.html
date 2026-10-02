@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#8a1c17">
 <title>為新人留下祝福</title>
 <link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&display=swap">
 <style>
   /* 首頁布幕只蓋第一個畫面，拉開後留在兩側；離開首頁就淡出 */
   #drape { position: absolute; height: 100svh; z-index: 0; transition: opacity .5s; }
@@ -86,6 +87,45 @@
   .ig-tip b { color: var(--wine); font-weight: 600; user-select: all; }
   .error { color: var(--brick-deep); background: #f6dcd6; border: 1px solid rgba(138,28,23,.4); padding: 10px 14px; margin: 16px 0 0; font-size: .95rem; text-align: left; }
 
+  /* ---------- 首頁膠卷：有已通過的祝福時，首頁變成橫向膠卷展示 ---------- */
+  body.has-film.at-home main { padding-top: 8svh; max-width: 540px; }
+  body.has-film .masthead { margin-bottom: 14px; }
+  body.has-film .masthead .names { font-size: clamp(2.2rem, 11vw, 3rem); margin-top: 4px; }
+  body.has-film .masthead .date { font-size: .95rem; margin-top: 2px; }
+  html, body { overflow-x: clip; }
+  .alt-q { display: none; }   /* 會被布幕蓋到，先收起來 */
+  /* 展示頁（預設）不放錄影拍照按鈕；網址加 ?record 才是錄影拍照頁 */
+  body.mode-show .actions, body.mode-show .alt { display: none; }
+  body.mode-show.has-film .invite { display: none; }
+  body.mode-show .cell { width: 64vw; max-width: 280px; }
+  body.mode-show .film-track { padding-left: 18vw; padding-right: 18vw; }
+  /* 有膠卷時布幕再往兩邊拉開一點，讓出中間的位置 */
+  #drape { transform-origin: 50% 0; transition: opacity .5s, transform 1.2s cubic-bezier(.6,0,.2,1); }
+  body.has-film #drape { transform: scaleX(1.5); }
+
+  .film { --hole: 9px; margin: 0 -20px 18px; background: #24110f; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    box-shadow: 0 10px 24px rgba(40,10,5,.35); }
+  .film::-webkit-scrollbar { display: none; }
+  .film-track { position: relative; display: flex; gap: 12px; width: max-content; padding: 30px 21vw 26px; }
+  /* 上下兩排齒孔，跟著膠卷一起捲動 */
+  .film-track::before, .film-track::after { content: ''; position: absolute; left: 0; right: 0; height: var(--hole);
+    background: repeating-linear-gradient(90deg, transparent 0 7px, var(--cream) 7px 19px, transparent 19px 26px); opacity: .85; border-radius: 2px; }
+  .film-track::before { top: 10px; }
+  .film-track::after { bottom: 8px; }
+  .cell { flex: none; width: 58vw; max-width: 250px; scroll-snap-align: center; color: var(--cream); }
+  .cell .pic { position: relative; aspect-ratio: 4 / 5; background: #000; border-radius: 3px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(248,228,206,.25); }
+  .cell .pic video, .cell .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cell .play { position: absolute; inset: 0; margin: auto; width: 54px; height: 54px; border-radius: 50%; border: 0; cursor: pointer;
+    background: rgba(248,228,206,.9); color: var(--wine); font-size: 1.2rem; padding-left: 4px; transition: opacity .2s; }
+  .cell.playing .play { opacity: 0; }
+  .cell .no { position: absolute; left: 7px; top: 5px; font: italic 500 .72rem var(--serif); letter-spacing: .12em; color: rgba(248,228,206,.85); text-shadow: 0 1px 2px #000; }
+  .cell .cap { padding: 9px 2px 0; text-align: center; min-height: 4.3em; font-family: 'LXGW WenKai TC', var(--zh); }
+  .cell .who { margin: 0; font-size: 1rem; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell .msg { margin: 2px 0 0; font-size: .8rem; line-height: 1.5; opacity: .78;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
   .petal { position: fixed; top: -30px; z-index: 30; width: 12px; height: 15px; pointer-events: none;
     background: var(--brick); border-radius: 60% 0 60% 0; animation: fall linear forwards; }
   .petal:nth-child(3n) { background: var(--cream); box-shadow: inset 0 0 0 1px var(--line); }
@@ -99,11 +139,12 @@
   <!-- 首頁 -->
   <section id="s-home">
     <header class="masthead">
-      <p class="kicker">為我們留下一段祝福</p>
+      <p class="kicker" id="kicker">為我們留下一段祝福</p>
       <h1 class="names script" data-couple></h1>
       <p class="date" data-date></p>
     </header>
-    <p class="invite">影片最長 60 秒，也可以拍照<br>新人確認後，會在會場大螢幕播出</p>
+    <p class="invite" id="invite">影片最長 60 秒，也可以拍照<br>新人確認後，會在會場大螢幕播出</p>
+    <div class="film" id="film" hidden aria-label="大家的祝福"><div class="film-track" id="film-track"></div></div>
     <div class="actions">
       <button class="plaque" id="go-video">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
@@ -112,7 +153,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg>
         拍一張照片</button>
     </div>
-    <p class="alt">已經拍好了？<button class="link" id="pick-file">從相簿選照片或影片</button></p>
+    <p class="alt"><span class="alt-q">已經拍好了？</span><button class="link" id="pick-file">從相簿選照片或影片</button></p>
     <input type="file" id="file-pick" accept="image/*,video/*" hidden>
   </section>
 

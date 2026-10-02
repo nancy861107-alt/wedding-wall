@@ -72,7 +72,7 @@
   host.style.inset = '0';
   createDrape(host, { lines: 9, spread: [0.2, 0.05, 0.13], gather: 0.44 }).set(1);
 
-  const guestUrl = new URL('./?openExternalBrowser=1', location.href).href;
+  const guestUrl = new URL('./?record&openExternalBrowser=1', location.href).href;
   const qr = qrcode(0, 'M');
   qr.addData(guestUrl);
   qr.make();

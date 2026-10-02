@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { isDemo, addEntry } from './store.js';
+import { isDemo, addEntry, listEntries, onChange } from './store.js';
 import './ornament.js';
 import { createDrape } from './drape.js';
 
@@ -7,6 +7,15 @@ const $ = (id) => document.getElementById(id);
 document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CONFIG.couple));
 document.querySelectorAll('[data-date]').forEach((el) => (el.textContent = CONFIG.date));
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
+
+// 兩種首頁：預設是展示頁（膠卷）；網址加 ?record 是錄影拍照頁（QR code 連到這裡）
+const RECORD = new URLSearchParams(location.search).has('record');
+document.body.classList.add(RECORD ? 'mode-record' : 'mode-show');
+if (!RECORD) {
+  $('kicker').textContent = '來自親友的祝福';
+  $('invite').innerHTML = '第一則祝福即將登場';
+  document.title = '大家的祝福';
+}
 
 const drape = createDrape($('drape'));
 document.body.classList.add('at-home');
@@ -48,6 +57,7 @@ function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
   scatterMinis($(id));
   document.body.classList.toggle('at-home', id === 's-home');
+  if (id !== 's-home') stopFilmVideos();   // 離開首頁就停掉膠卷裡正在播的影片
   window.scrollTo(0, 0);
 }
 // 在這台電腦預覽（localhost）時不顯示「沒辦法開啟相機」，因為預覽視窗本來就會擋相機；正式網址照常顯示
@@ -325,4 +335,66 @@ function petals() {
     document.body.append(p);
     p.addEventListener('animationend', () => p.remove());
   }
+}
+
+
+/* ---------- 首頁膠卷：展示已通過的祝福（最新 12 則） ---------- */
+const FILM_MAX = 12;
+const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+let filmIds = '', filmTouched = false, filmTimer = null;
+
+async function loadFilm() {
+  let items = [];
+  try { items = (await listEntries('approved')).reverse().slice(0, FILM_MAX); } catch { return; }
+  const ids = items.map((e) => e.id).join();
+  if (ids === filmIds) return;
+  filmIds = ids;
+  $('film').hidden = !items.length;
+  document.body.classList.toggle('has-film', items.length > 0);
+  // 影片只先載第一格畫面（#t=0.1），按了才下載播放，省流量
+  $('film-track').innerHTML = items.map((e, i) => `
+    <figure class="cell" style="margin:0">
+      <div class="pic">
+        ${e.kind === 'video'
+          ? `<video src="${escHtml(e.url)}#t=0.1" preload="metadata" playsinline></video><button class="play" aria-label="播放 ${escHtml(e.name)} 的祝福">▶</button>`
+          : `<img src="${escHtml(e.url)}" alt="${escHtml(e.name)} 的照片" loading="lazy">`}
+        <span class="no">${String(i + 1).padStart(2, '0')}</span>
+      </div>
+      <figcaption class="cap"><p class="who">${escHtml(e.name)}</p>${e.message ? `<p class="msg">${escHtml(e.message)}</p>` : ''}</figcaption>
+    </figure>`).join('');
+}
+
+function stopFilmVideos(except) {
+  $('film').querySelectorAll('video').forEach((v) => {
+    if (v !== except) { v.pause(); v.closest('.cell').classList.remove('playing'); }
+  });
+}
+$('film').addEventListener('click', (ev) => {
+  const pic = ev.target.closest('.pic');
+  const v = pic?.querySelector('video');
+  if (!v) return;
+  filmTouched = true;
+  if (v.paused) {
+    stopFilmVideos(v);
+    v.play().then(() => v.closest('.cell').classList.add('playing')).catch(() => {});
+    v.onended = () => v.closest('.cell').classList.remove('playing');
+  } else {
+    v.pause(); v.closest('.cell').classList.remove('playing');
+  }
+});
+// 沒人碰的時候，膠卷每 4 秒自動捲到下一格；碰過就停，交給賓客自己滑
+['pointerdown', 'wheel', 'touchstart'].forEach((t) => $('film').addEventListener(t, () => { filmTouched = true; }, { passive: true }));
+filmTimer = setInterval(() => {
+  const film = $('film');
+  if (filmTouched || film.hidden || $('s-home').hidden || document.hidden) return;
+  const cell = film.querySelector('.cell');
+  if (!cell) return;
+  const step = cell.offsetWidth + 12;
+  const atEnd = film.scrollLeft + film.clientWidth >= film.scrollWidth - 4;
+  film.scrollTo({ left: atEnd ? 0 : film.scrollLeft + step, behavior: 'smooth' });
+}, 4000);
+
+if (!RECORD) {
+  loadFilm();
+  onChange(() => loadFilm());
 }
