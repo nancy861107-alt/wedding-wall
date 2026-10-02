@@ -32,8 +32,8 @@
   /* 取景框、預覽框用畫框素材（frames/）；.win 是畫框挖空的位置，固定 4:5 */
   .pframe { position: relative; background: none; }
   /* 取景框盡量放大：左右幾乎貼齊螢幕 */
-  .viewer.pframe { margin: 0 -14px 18px; }
-  body:not(.at-home) main { padding-top: 28px; }
+  .viewer.pframe { margin: 0 -20px 16px; }
+  body:not(.at-home) main { padding-top: 10px; max-width: 540px; }
   .pframe .win { position: absolute; overflow: hidden; background: #1d0f0d; }
   .pframe .win video, .pframe .win img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .pframe .pf-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none;
@@ -50,7 +50,8 @@
     border: 0; background: rgba(247,240,230,.9); color: var(--wine); font-size: 1.2rem; cursor: pointer;
   }
   /* 畫框下方隨機出現的小插圖 */
-  .minis { display: flex; justify-content: space-around; align-items: center; height: 96px; margin-top: 14px; pointer-events: none; }
+  .minis { display: none;   /* 先不顯示；要開回來把 none 改成 flex */
+    justify-content: space-around; align-items: center; height: 96px; margin-top: 14px; pointer-events: none; }
   .minis img { height: var(--h); rotate: var(--r); translate: 0 var(--y); opacity: 0; animation: mini-in .7s cubic-bezier(.3,1.4,.5,1) var(--d) forwards; }
   @keyframes mini-in { from { opacity: 0; scale: .4; } to { opacity: 1; scale: 1; } }
   .rec-row { display: flex; align-items: center; justify-content: center; gap: 28px; }
