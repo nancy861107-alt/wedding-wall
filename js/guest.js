@@ -61,6 +61,8 @@ const thumbWin = () => $('thumb').querySelector('.win') || $('thumb');
 
 // 畫框下方隨機擺 3 張小插圖，每次進到這個畫面都不一樣
 const MINIS = ['bow', 'bow2', 'cat', 'cat2', 'ring', 'doves', 'love', 'love2'];
+// 每張插圖的寬高比（寬 ÷ 高），用來算實際佔的範圍
+const MINI_RATIO = { bow: 700 / 530, bow2: 700 / 622, cat: 700 / 578, cat2: 666 / 700, ring: 440 / 700, doves: 900 / 423, love: 700 / 678, love2: 700 / 678 };
 const rnd = (a, b) => a + Math.random() * (b - a);
 function scatterMinis(section) {
   const box = section.querySelector('.minis');
@@ -437,18 +439,29 @@ const DECO_SWAP_MS = 5000;
 let decos = [];   // [{ x, y, name, el }]
 let decoSize = 60;
 
-function decoSpot(skip) {
+// 插圖塞進 decoSize 的正方形裡：橫的以寬為準、直的以高為準
+function decoBox(name) {
+  const r = MINI_RATIO[name] || 1;
+  return r >= 1 ? { w: decoSize, h: decoSize / r } : { w: decoSize * r, h: decoSize };
+}
+
+function decoSpot(name, skip) {
   const wall = $('film'), reels = $('reels');
   const W = wall.clientWidth, H = wall.clientHeight;
   const band = [...reels.querySelectorAll('.reel')].reduce((n, r) => n + r.offsetWidth, 0);
   const ang = (parseFloat(getComputedStyle(reels).rotate) || 0) * Math.PI / 180;
-  for (let k = 0; k < 250; k++) {
-    const x = rnd(decoSize * 0.55, W - decoSize * 0.55), y = rnd(decoSize * 0.6, H - decoSize * 0.6);
+  const { w, h } = decoBox(name);
+  const reach = Math.hypot(w, h) / 2;          // 旋轉後最遠會伸到的距離
+  const gap = decoSize * 0.3;                  // 插圖之間至少留這麼多
+  for (let k = 0; k < 300; k++) {
+    // 離畫面邊緣留足夠距離：旋轉、上下飄動（最多往上 10px）都不會被切到
+    const x = rnd(reach + 8, W - reach - 8), y = rnd(reach + 18, H - reach - 8);
     // 把點轉回膠卷的座標，看離膠卷帶夠不夠遠
     const across = Math.abs((x - W / 2) * Math.cos(ang) + (y - H / 2) * Math.sin(ang));
-    if (across < band / 2 + decoSize * 0.7) continue;
-    if (decos.some((d) => d !== skip && Math.hypot(d.x - x, d.y - y) < decoSize * 1.3)) continue;
-    return { x, y };
+    if (across < band / 2 + reach + 8) continue;
+    // 跟其他插圖用「外接圓」比距離，怎麼轉、怎麼飄都不會疊到
+    if (decos.some((d) => d !== skip && Math.hypot(d.x - x, d.y - y) < reach + d.reach + gap)) continue;
+    return { x, y, w, h, reach };
   }
   return null;
 }
@@ -457,7 +470,7 @@ function addDeco(name, spot, delay) {
   const el = document.createElement('img');
   el.src = `deco/${name}.png`;
   el.alt = '';
-  el.style.cssText = `left:${spot.x - decoSize / 2}px;top:${spot.y - decoSize / 2}px;--h:${decoSize}px;--r:${rnd(-18, 18)}deg;--d:${delay}s;--bob:${rnd(3, 5).toFixed(1)}s`;
+  el.style.cssText = `left:${spot.x - spot.w / 2}px;top:${spot.y - spot.h / 2}px;--h:${spot.h}px;--r:${rnd(-18, 18)}deg;--d:${delay}s;--bob:${rnd(3, 5).toFixed(1)}s`;
   $('film-deco').append(el);
   const d = { ...spot, name, el };
   decos.push(d);
@@ -472,19 +485,23 @@ function scatterFilmDeco() {
   $('film-deco').innerHTML = '';
   decos = [];
   const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, W < 700 ? 6 : 8);
-  picks.forEach((n, i) => { const spot = decoSpot(); if (spot) addDeco(n, spot, 0.3 + i * 0.12); });
+  picks.forEach((n, i) => { const spot = decoSpot(n); if (spot) addDeco(n, spot, 0.3 + i * 0.12); });
 }
 
 // 換掉一個：舊的縮小淡出，另一張沒出現過的插圖從別的空位冒出來
 function swapDeco() {
   if ($('film').hidden || $('s-home').hidden || document.hidden || !$('lightbox').hidden || !decos.length) return;
-  const old = decos[Math.floor(Math.random() * decos.length)];
+  const live = decos.filter((d) => d.name);
+  if (!live.length) return;
+  const old = live[Math.floor(Math.random() * live.length)];
   const unused = MINIS.filter((n) => !decos.some((d) => d.name === n));
   const name = (unused.length ? unused : MINIS)[Math.floor(Math.random() * (unused.length || MINIS.length))];
-  const spot = decoSpot(old) || { x: old.x, y: old.y };
+  // 先找完全空的位置；沒有的話就接手舊的那一張讓出來的位置（舊的會先淡出）
+  const spot = decoSpot(name) || decoSpot(name, old);
+  if (!spot) return;
   old.el.classList.add('out');
-  setTimeout(() => old.el.remove(), 700);
-  decos = decos.filter((d) => d !== old);
+  setTimeout(() => { old.el.remove(); decos = decos.filter((d) => d !== old); }, 700);
+  old.name = '';
   addDeco(name, spot, 0.5);
 }
 setInterval(swapDeco, DECO_SWAP_MS);
