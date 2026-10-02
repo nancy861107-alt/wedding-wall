@@ -49,6 +49,10 @@
     position: absolute; right: 14px; bottom: 14px; z-index: 2; width: 44px; height: 44px; border-radius: 50%;
     border: 0; background: rgba(247,240,230,.9); color: var(--wine); font-size: 1.2rem; cursor: pointer;
   }
+  /* 畫框下方隨機出現的小插圖 */
+  .minis { display: flex; justify-content: space-around; align-items: center; height: 96px; margin-top: 14px; pointer-events: none; }
+  .minis img { height: var(--h); rotate: var(--r); translate: 0 var(--y); opacity: 0; animation: mini-in .7s cubic-bezier(.3,1.4,.5,1) var(--d) forwards; }
+  @keyframes mini-in { from { opacity: 0; scale: .4; } to { opacity: 1; scale: 1; } }
   .rec-row { display: flex; align-items: center; justify-content: center; gap: 28px; }
   .rec-btn {
     width: 76px; height: 76px; border-radius: 50%; cursor: pointer; border: 0;
@@ -126,6 +130,7 @@
     </div>
     <p class="hint" id="rec-hint">按下紅色按鈕開始錄，最長 60 秒</p>
     <p class="error" id="cam-error" hidden></p>
+    <div class="minis" aria-hidden="true"></div>
   </section>
 
   <!-- 錄完預覽 -->
@@ -135,6 +140,7 @@
       <button class="plaque ghost" id="redo">重錄</button>
       <button class="plaque" id="use">用這段</button>
     </div>
+    <div class="minis" aria-hidden="true"></div>
   </section>
 
   <!-- 填名字 -->

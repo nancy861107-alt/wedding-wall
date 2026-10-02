@@ -33,8 +33,20 @@ function applyFrame(el) {
 document.querySelectorAll('.viewer, .thumb').forEach(applyFrame);
 const thumbWin = () => $('thumb').querySelector('.win') || $('thumb');
 
+// 畫框下方隨機擺 3 張小插圖，每次進到這個畫面都不一樣
+const MINIS = ['bow', 'bow2', 'cat', 'cat2', 'ring', 'doves', 'love', 'love2'];
+const rnd = (a, b) => a + Math.random() * (b - a);
+function scatterMinis(section) {
+  const box = section.querySelector('.minis');
+  if (!box) return;
+  const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, 3);
+  box.innerHTML = picks.map((n, i) =>
+    `<img src="deco/${n}.png" alt="" style="--h:${rnd(46, 62)}px;--r:${rnd(-14, 14)}deg;--y:${rnd(-12, 12)}px;--d:${0.15 + i * 0.15}s">`).join('');
+}
+
 function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
+  scatterMinis($(id));
   document.body.classList.toggle('at-home', id === 's-home');
   window.scrollTo(0, 0);
 }
