@@ -362,23 +362,36 @@ const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCod
 let filmIds = '', filmItems = [];
 const strip = RECORD ? null : await fetch('film/strip.json').then((r) => r.json()).catch(() => null);
 
-// 影片只抓第一格畫面當縮圖，放大看時才真的下載播放，省流量
+// 影片在膠卷格裡像動圖一樣跳 3 格：只抓前兩秒的 3 個畫面，點開放大才真的下載整支影片，省流量
+const FRAME_TIMES = [0.4, 1.0, 1.6];
 const thumbs = new Map();
-function videoThumb(e) {
+function videoFrames(e) {
   if (!thumbs.has(e.id)) thumbs.set(e.id, new Promise((resolve) => {
     const v = document.createElement('video');
-    v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'metadata';
-    const done = (url) => { resolve(url); v.removeAttribute('src'); v.load(); };
-    v.onloadeddata = () => {
+    v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const shots = [];
+    let finished = false;
+    const done = () => { if (finished) return; finished = true; resolve(shots); v.removeAttribute('src'); v.load(); };
+    const grab = () => {
       try {
         const c = Object.assign(document.createElement('canvas'), { width: 360, height: Math.round(360 * v.videoHeight / v.videoWidth) || 450 });
         c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-        done(c.toDataURL('image/jpeg', 0.7));
-      } catch { done(''); }
+        shots.push(c.toDataURL('image/jpeg', 0.7));
+      } catch { /* 跨網域抓不到畫面就算了 */ }
     };
-    v.onerror = () => done('');
-    setTimeout(() => done(''), 8000);
-    v.src = `${e.url}#t=0.1`;
+    v.onloadeddata = async () => {
+      const max = isFinite(v.duration) && v.duration > 0 ? v.duration * 0.9 : Infinity;
+      for (const t of FRAME_TIMES) {
+        if (t > max) break;
+        await new Promise((r) => { v.onseeked = r; setTimeout(r, 2500); v.currentTime = t; });
+        grab();
+      }
+      if (!shots.length) grab();
+      done();
+    };
+    v.onerror = done;
+    setTimeout(done, 12000);
+    v.src = e.url;
   }));
   return thumbs.get(e.id);
 }
@@ -394,11 +407,11 @@ async function loadFilm() {
   document.body.classList.toggle('has-film', items.length > 0);
   if (!items.length) return;
 
-  const pics = await Promise.all(items.map((e) => (e.kind === 'video' ? videoThumb(e) : e.url)));
+  const pics = await Promise.all(items.map((e) => (e.kind === 'video' ? videoFrames(e) : [e.url])));
   const slot = (idx, win) => {
     const e = items[idx], [x, y, w, h] = win.map((v) => `${v * 100}%`);
     return `<button class="slot" data-i="${idx}" style="left:${x};top:${y};width:${w};height:${h}" aria-label="${escHtml(e.name)} 的祝福">
-      ${pics[idx] ? `<img src="${escHtml(pics[idx])}" alt="" loading="lazy">` : ''}
+      ${pics[idx].map((src, f) => `<img class="${pics[idx].length > 1 ? `gif f${f}` : ''}" src="${escHtml(src)}" alt="">`).join('')}
       ${e.kind === 'video' ? '<span class="vid">▶</span>' : ''}<span class="tag">${escHtml(e.name)}</span></button>`;
   };
   // 每條膠卷至少 3 段（9 格），祝福不夠就輪流重複；每條從不同的祝福開始
