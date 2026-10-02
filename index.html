@@ -99,17 +99,16 @@
   /* 展示頁（預設）不放錄影拍照按鈕；網址加 ?record 才是錄影拍照頁 */
   body.mode-show .actions, body.mode-show .alt { display: none; }
   body.mode-show.has-film .invite { display: none; }
-  body.has-film.at-home main { padding-top: 6svh; padding-bottom: 0; max-width: none; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
+  body.has-film.at-home main { padding-top: 0; padding-bottom: 0; max-width: none; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
   body.has-film.at-home #s-home { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  body.has-film .masthead { margin-bottom: 10px; }
+  body.has-film .masthead { display: none; }   /* 膠卷頁不放標題，整個畫面都是膠卷 */
   body.has-film .masthead .names { font-size: clamp(2.2rem, 11vw, 3rem); margin-top: 4px; }
   body.has-film .masthead .date { font-size: .95rem; margin-top: 2px; }
   /* 有膠卷時布幕再往兩邊拉開一點，讓出中間的位置 */
   #drape { transform-origin: 50% 0; transition: opacity .5s, transform 1.2s cubic-bezier(.6,0,.2,1); }
   body.has-film #drape { transform: scaleX(1.5); }
 
-  .filmwall { position: relative; flex: 1; min-height: 0; margin: 0 -20px; overflow: hidden;
-    -webkit-mask-image: linear-gradient(transparent, #000 9%); mask-image: linear-gradient(transparent, #000 9%); }
+  .filmwall { position: relative; flex: 1; min-height: 0; margin: 0 -20px; overflow: hidden; }
   .reels { position: absolute; left: 50%; top: 50%; width: 190%; height: 190%; translate: -50% -50%; rotate: -14deg;
     display: flex; justify-content: center; gap: 3vw; }
   .reel { flex: none; width: 38vw; max-width: 210px; opacity: .92; }
