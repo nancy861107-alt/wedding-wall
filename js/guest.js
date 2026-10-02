@@ -434,7 +434,7 @@ async function loadFilm() {
   setTimeout(scatterFilmDeco, 120);
 }
 
-// 膠卷兩旁的空白處懸浮著小插圖：不壓到膠卷、彼此不重疊；大約每 5 秒換掉其中一個
+// 膠卷兩旁各排一列小插圖：跟膠卷同樣的斜度、間距一樣、大小一樣、不歪斜；大約每 5 秒原地換掉其中一張
 const DECO_SWAP_MS = 5000;
 let decos = [];   // [{ x, y, name, el }]
 let decoSize = 60;
@@ -445,64 +445,63 @@ function decoBox(name) {
   return r >= 1 ? { w: decoSize, h: decoSize / r } : { w: decoSize * r, h: decoSize };
 }
 
-function decoSpot(name, skip) {
+// 算出兩列的固定位置（只留完整落在畫面內的）
+function decoSlots() {
   const wall = $('film'), reels = $('reels');
   const W = wall.clientWidth, H = wall.clientHeight;
   const band = [...reels.querySelectorAll('.reel')].reduce((n, r) => n + r.offsetWidth, 0);
   const ang = (parseFloat(getComputedStyle(reels).rotate) || 0) * Math.PI / 180;
-  const { w, h } = decoBox(name);
-  const reach = Math.hypot(w, h) / 2;          // 旋轉後最遠會伸到的距離
-  const gap = decoSize * 0.3;                  // 插圖之間至少留這麼多
-  for (let k = 0; k < 300; k++) {
-    // 離畫面邊緣留足夠距離：旋轉、上下飄動（最多往上 10px）都不會被切到
-    const x = rnd(reach + 8, W - reach - 8), y = rnd(reach + 18, H - reach - 8);
-    // 把點轉回膠卷的座標，看離膠卷帶夠不夠遠
-    const across = Math.abs((x - W / 2) * Math.cos(ang) + (y - H / 2) * Math.sin(ang));
-    if (across < band / 2 + reach + 8) continue;
-    // 跟其他插圖用「外接圓」比距離，怎麼轉、怎麼飄都不會疊到
-    if (decos.some((d) => d !== skip && Math.hypot(d.x - x, d.y - y) < reach + d.reach + gap)) continue;
-    return { x, y, w, h, reach };
+  const off = band / 2 + decoSize * 0.72;        // 離膠卷中心線的距離
+  const step = decoSize * 1.75;                  // 同一列裡每張的間距
+  const half = decoSize / 2 + 8, n = Math.ceil(Math.hypot(W, H) / step);
+  const slots = [];
+  for (const side of [-1, 1]) {
+    for (let i = -n; i <= n; i++) {
+      const along = (i + (side > 0 ? 0.5 : 0)) * step;     // 左右兩列錯開半格
+      const x = W / 2 + side * off * Math.cos(ang) - along * Math.sin(ang);
+      const y = H / 2 + side * off * Math.sin(ang) + along * Math.cos(ang);
+      if (x < half || x > W - half || y < half + 10 || y > H - half) continue;
+      slots.push({ x, y });
+    }
   }
-  return null;
+  return slots;
 }
 
-function addDeco(name, spot, delay) {
+function setDeco(d, name, delay) {
+  const { w, h } = decoBox(name);
   const el = document.createElement('img');
   el.src = `deco/${name}.png`;
   el.alt = '';
-  el.style.cssText = `left:${spot.x - spot.w / 2}px;top:${spot.y - spot.h / 2}px;--h:${spot.h}px;--r:${rnd(-18, 18)}deg;--d:${delay}s;--bob:${rnd(3, 5).toFixed(1)}s`;
+  el.style.cssText = `left:${d.x - w / 2}px;top:${d.y - h / 2}px;--h:${h}px;--r:0deg;--d:${delay}s;--bob:${rnd(3.2, 4.6).toFixed(1)}s`;
   $('film-deco').append(el);
-  const d = { ...spot, name, el };
-  decos.push(d);
-  return d;
+  d.name = name; d.el = el;
 }
 
 function scatterFilmDeco() {
   const wall = $('film');
   if (wall.hidden) return;
   const W = wall.clientWidth, H = wall.clientHeight;
-  decoSize = Math.max(52, Math.min(W, H) * (W < 700 ? 0.165 : 0.145));
+  decoSize = Math.max(48, Math.min(W, H) * (W < 700 ? 0.14 : 0.13));
   $('film-deco').innerHTML = '';
-  decos = [];
-  const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, W < 700 ? 6 : 8);
-  picks.forEach((n, i) => { const spot = decoSpot(n); if (spot) addDeco(n, spot, 0.3 + i * 0.12); });
+  decos = decoSlots();
+  // 依序發不同的圖，8 張用完再重新洗牌，相鄰的不會一樣
+  let bag = [];
+  decos.forEach((d, i) => {
+    if (!bag.length) bag = [...MINIS].sort(() => Math.random() - 0.5);
+    setDeco(d, bag.pop(), 0.3 + i * 0.1);
+  });
 }
 
-// 換掉一個：舊的縮小淡出，另一張沒出現過的插圖從別的空位冒出來
+// 原地換掉一張：舊的縮小淡出，同一個位置換一張目前畫面上沒有的插圖
 function swapDeco() {
   if ($('film').hidden || $('s-home').hidden || document.hidden || !$('lightbox').hidden || !decos.length) return;
-  const live = decos.filter((d) => d.name);
-  if (!live.length) return;
-  const old = live[Math.floor(Math.random() * live.length)];
-  const unused = MINIS.filter((n) => !decos.some((d) => d.name === n));
-  const name = (unused.length ? unused : MINIS)[Math.floor(Math.random() * (unused.length || MINIS.length))];
-  // 先找完全空的位置；沒有的話就接手舊的那一張讓出來的位置（舊的會先淡出）
-  const spot = decoSpot(name) || decoSpot(name, old);
-  if (!spot) return;
-  old.el.classList.add('out');
-  setTimeout(() => { old.el.remove(); decos = decos.filter((d) => d !== old); }, 700);
-  old.name = '';
-  addDeco(name, spot, 0.5);
+  const d = decos[Math.floor(Math.random() * decos.length)];
+  const unused = MINIS.filter((n) => !decos.some((x) => x.name === n));
+  const pool = unused.length ? unused : MINIS.filter((n) => n !== d.name);
+  const old = d.el;
+  old.classList.add('out');
+  setTimeout(() => old.remove(), 700);
+  setDeco(d, pool[Math.floor(Math.random() * pool.length)], 0.6);
 }
 setInterval(swapDeco, DECO_SWAP_MS);
 addEventListener('resize', () => { clearTimeout(scatterFilmDeco.t); scatterFilmDeco.t = setTimeout(scatterFilmDeco, 300); });
