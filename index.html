@@ -93,44 +93,53 @@
   .ig-tip b { color: var(--wine); font-weight: 600; user-select: all; }
   .error { color: var(--brick-deep); background: #f6dcd6; border: 1px solid rgba(138,28,23,.4); padding: 10px 14px; margin: 16px 0 0; font-size: .95rem; text-align: left; }
 
-  /* ---------- 首頁膠卷：有已通過的祝福時，首頁變成橫向膠卷展示 ---------- */
-  body.has-film.at-home main { padding-top: 8svh; max-width: 540px; }
-  body.has-film .masthead { margin-bottom: 14px; }
-  body.has-film .masthead .names { font-size: clamp(2.2rem, 11vw, 3rem); margin-top: 4px; }
-  body.has-film .masthead .date { font-size: .95rem; margin-top: 2px; }
+  /* ---------- 展示首頁：斜斜的膠卷牆，用 film/strip.png 素材，一直流動 ---------- */
   html, body { overflow-x: clip; }
   .alt-q { display: none; }   /* 會被布幕蓋到，先收起來 */
   /* 展示頁（預設）不放錄影拍照按鈕；網址加 ?record 才是錄影拍照頁 */
   body.mode-show .actions, body.mode-show .alt { display: none; }
   body.mode-show.has-film .invite { display: none; }
-  body.mode-show .cell { width: 64vw; max-width: 280px; }
-  body.mode-show .film-track { padding-left: 18vw; padding-right: 18vw; }
+  body.has-film.at-home main { padding-top: 6svh; padding-bottom: 0; max-width: none; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
+  body.has-film.at-home #s-home { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  body.has-film .masthead { margin-bottom: 10px; }
+  body.has-film .masthead .names { font-size: clamp(2.2rem, 11vw, 3rem); margin-top: 4px; }
+  body.has-film .masthead .date { font-size: .95rem; margin-top: 2px; }
   /* 有膠卷時布幕再往兩邊拉開一點，讓出中間的位置 */
   #drape { transform-origin: 50% 0; transition: opacity .5s, transform 1.2s cubic-bezier(.6,0,.2,1); }
   body.has-film #drape { transform: scaleX(1.5); }
 
-  .film { --hole: 9px; margin: 0 -20px 18px; background: #24110f; overflow-x: auto; overflow-y: hidden;
-    scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch;
-    box-shadow: 0 10px 24px rgba(40,10,5,.35); }
-  .film::-webkit-scrollbar { display: none; }
-  .film-track { position: relative; display: flex; gap: 12px; width: max-content; padding: 30px 21vw 26px; }
-  /* 上下兩排齒孔，跟著膠卷一起捲動 */
-  .film-track::before, .film-track::after { content: ''; position: absolute; left: 0; right: 0; height: var(--hole);
-    background: repeating-linear-gradient(90deg, transparent 0 7px, var(--cream) 7px 19px, transparent 19px 26px); opacity: .85; border-radius: 2px; }
-  .film-track::before { top: 10px; }
-  .film-track::after { bottom: 8px; }
-  .cell { flex: none; width: 58vw; max-width: 250px; scroll-snap-align: center; color: var(--cream); }
-  .cell .pic { position: relative; aspect-ratio: 4 / 5; background: #000; border-radius: 3px; overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(248,228,206,.25); }
-  .cell .pic video, .cell .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .cell .play { position: absolute; inset: 0; margin: auto; width: 54px; height: 54px; border-radius: 50%; border: 0; cursor: pointer;
-    background: rgba(248,228,206,.9); color: var(--wine); font-size: 1.2rem; padding-left: 4px; transition: opacity .2s; }
-  .cell.playing .play { opacity: 0; }
-  .cell .no { position: absolute; left: 7px; top: 5px; font: italic 500 .72rem var(--serif); letter-spacing: .12em; color: rgba(248,228,206,.85); text-shadow: 0 1px 2px #000; }
-  .cell .cap { padding: 9px 2px 0; text-align: center; min-height: 4.3em; font-family: 'LXGW WenKai TC', var(--zh); }
-  .cell .who { margin: 0; font-size: 1rem; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cell .msg { margin: 2px 0 0; font-size: .8rem; line-height: 1.5; opacity: .78;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .filmwall { position: relative; flex: 1; min-height: 0; margin: 0 -20px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(transparent, #000 9%); mask-image: linear-gradient(transparent, #000 9%); }
+  .reels { position: absolute; left: 50%; top: 50%; width: 190%; height: 190%; translate: -50% -50%; rotate: -14deg;
+    display: flex; justify-content: center; gap: 4vw; }
+  .reel { flex: none; width: 46vw; max-width: 250px; }
+  .reel-track { display: flex; flex-direction: column; animation: flow var(--dur, 60s) linear infinite; will-change: transform; }
+  .reel:nth-child(even) .reel-track { animation-direction: reverse; }
+  .reels.paused .reel-track { animation-play-state: paused; }
+  @keyframes flow { to { transform: translateY(-50%); } }
+  .tile { position: relative; flex: none; filter: drop-shadow(0 6px 10px rgba(40,10,5,.3)); }
+  .tile .strip { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .slot { position: absolute; overflow: hidden; background: #2a1512; cursor: pointer; border: 0; padding: 0; }
+  .slot img, .slot video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .slot .tag { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 6px; text-align: center;
+    font: .78rem/1.3 'LXGW WenKai TC', var(--zh); letter-spacing: .05em; color: var(--cream);
+    background: linear-gradient(transparent, rgba(30,8,6,.78)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slot .vid { position: absolute; right: 7px; top: 7px; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(248,228,206,.9); color: var(--wine); font-size: .6rem; line-height: 22px; text-align: center; padding-left: 2px; }
+
+  /* 點一格放大看：影片可播放，下面是名字和留言 */
+  .lightbox { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
+    background: rgba(46,10,8,.86); animation: rise .3s ease both; }
+  .lightbox .card { width: min(88vw, 400px); background: var(--paper); padding: 12px 12px 16px; border-radius: 3px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5); text-align: center; }
+  .lightbox .media { aspect-ratio: 4 / 5; background: #1d0f0d; }
+  .lightbox .media img, .lightbox .media video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .lightbox .who { margin: 12px 0 0; font: 1.25rem 'LXGW WenKai TC', var(--zh); letter-spacing: .06em; }
+  .lightbox .msg { margin: 4px 0 0; font: .98rem/1.6 'LXGW WenKai TC', var(--zh); color: var(--wine-soft); }
+  .lightbox .msg:empty { display: none; }
+  .lightbox .close { margin-top: 12px; }
+
+  @media (prefers-reduced-motion: reduce) { .reel-track { animation: none; } }
 
   .petal { position: fixed; top: -30px; z-index: 30; width: 12px; height: 15px; pointer-events: none;
     background: var(--brick); border-radius: 60% 0 60% 0; animation: fall linear forwards; }
@@ -150,7 +159,7 @@
       <p class="date" data-date></p>
     </header>
     <p class="invite" id="invite">影片最長 60 秒，也可以拍照<br>新人確認後，會在會場大螢幕播出</p>
-    <div class="film" id="film" hidden aria-label="大家的祝福"><div class="film-track" id="film-track"></div></div>
+    <div class="filmwall" id="film" hidden aria-label="大家的祝福"><div class="reels" id="reels"></div></div>
     <div class="actions">
       <button class="plaque" id="go-video">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
@@ -226,6 +235,15 @@
     <button class="plaque ghost" id="again">再留一則祝福</button>
   </section>
 </main>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="card">
+    <div class="media" id="lb-media"></div>
+    <p class="who" id="lb-who"></p>
+    <p class="msg" id="lb-msg"></p>
+    <button class="link close" id="lb-close">關閉</button>
+  </div>
+</div>
 
 <script type="module" src="js/guest.js"></script>
 </body>

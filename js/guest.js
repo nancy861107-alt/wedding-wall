@@ -356,61 +356,88 @@ function petals() {
 }
 
 
-/* ---------- 首頁膠卷：展示已通過的祝福（最新 12 則） ---------- */
-const FILM_MAX = 12;
+/* ---------- 展示首頁：斜斜流動的膠卷牆（最新 12 則已通過的祝福） ---------- */
+const FILM_MAX = 12, REELS = 3, FLOW_PX_PER_SEC = 26;
 const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-let filmIds = '', filmTouched = false, filmTimer = null;
+let filmIds = '', filmItems = [];
+const strip = RECORD ? null : await fetch('film/strip.json').then((r) => r.json()).catch(() => null);
+
+// 影片只抓第一格畫面當縮圖，放大看時才真的下載播放，省流量
+const thumbs = new Map();
+function videoThumb(e) {
+  if (!thumbs.has(e.id)) thumbs.set(e.id, new Promise((resolve) => {
+    const v = document.createElement('video');
+    v.crossOrigin = 'anonymous'; v.muted = true; v.playsInline = true; v.preload = 'metadata';
+    const done = (url) => { resolve(url); v.removeAttribute('src'); v.load(); };
+    v.onloadeddata = () => {
+      try {
+        const c = Object.assign(document.createElement('canvas'), { width: 360, height: Math.round(360 * v.videoHeight / v.videoWidth) || 450 });
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        done(c.toDataURL('image/jpeg', 0.7));
+      } catch { done(''); }
+    };
+    v.onerror = () => done('');
+    setTimeout(() => done(''), 8000);
+    v.src = `${e.url}#t=0.1`;
+  }));
+  return thumbs.get(e.id);
+}
 
 async function loadFilm() {
+  if (!strip) return;
   let items = [];
   try { items = (await listEntries('approved')).reverse().slice(0, FILM_MAX); } catch { return; }
   const ids = items.map((e) => e.id).join();
   if (ids === filmIds) return;
-  filmIds = ids;
+  filmIds = ids; filmItems = items;
   $('film').hidden = !items.length;
   document.body.classList.toggle('has-film', items.length > 0);
-  // 影片只先載第一格畫面（#t=0.1），按了才下載播放，省流量
-  $('film-track').innerHTML = items.map((e, i) => `
-    <figure class="cell" style="margin:0">
-      <div class="pic">
-        ${e.kind === 'video'
-          ? `<video src="${escHtml(e.url)}#t=0.1" preload="metadata" playsinline></video><button class="play" aria-label="播放 ${escHtml(e.name)} 的祝福">▶</button>`
-          : `<img src="${escHtml(e.url)}" alt="${escHtml(e.name)} 的照片" loading="lazy">`}
-        <span class="no">${String(i + 1).padStart(2, '0')}</span>
-      </div>
-      <figcaption class="cap"><p class="who">${escHtml(e.name)}</p>${e.message ? `<p class="msg">${escHtml(e.message)}</p>` : ''}</figcaption>
-    </figure>`).join('');
+  if (!items.length) return;
+
+  const pics = await Promise.all(items.map((e) => (e.kind === 'video' ? videoThumb(e) : e.url)));
+  const slot = (idx, win) => {
+    const e = items[idx], [x, y, w, h] = win.map((v) => `${v * 100}%`);
+    return `<button class="slot" data-i="${idx}" style="left:${x};top:${y};width:${w};height:${h}" aria-label="${escHtml(e.name)} 的祝福">
+      ${pics[idx] ? `<img src="${escHtml(pics[idx])}" alt="" loading="lazy">` : ''}
+      ${e.kind === 'video' ? '<span class="vid">▶</span>' : ''}<span class="tag">${escHtml(e.name)}</span></button>`;
+  };
+  // 每條膠卷至少 3 段（9 格），祝福不夠就輪流重複；每條從不同的祝福開始
+  // 段數要讓「總格數」剛好是祝福數的倍數，接回開頭時才不會同一則連續出現兩次
+  const per = strip.wins.length;
+  let tiles = 3;
+  while ((tiles * per) % items.length && tiles < 12) tiles++;
+  $('reels').innerHTML = Array.from({ length: REELS }, (_, r) => {
+    const set = Array.from({ length: tiles }, (_, t) => `<div class="tile" style="aspect-ratio:${strip.w}/${strip.h}">
+      ${strip.wins.map((win, k) => slot((r * 3 + t * per + k) % items.length, win)).join('')}
+      <img class="strip" src="${strip.src}" alt=""></div>`).join('');
+    return `<div class="reel"><div class="reel-track">${set}${set}</div></div>`;   // 放兩份，捲到一半剛好接回開頭
+  }).join('');
+  // 流動速度固定，膠卷越長轉一圈越久
+  setTimeout(() => document.querySelectorAll('.reel-track').forEach((t, i) => {
+    t.style.setProperty('--dur', `${Math.round(t.scrollHeight / 2 / (FLOW_PX_PER_SEC + i * 5))}s`);
+  }), 50);
 }
 
-function stopFilmVideos(except) {
-  $('film').querySelectorAll('video').forEach((v) => {
-    if (v !== except) { v.pause(); v.closest('.cell').classList.remove('playing'); }
-  });
+function openLightbox(e) {
+  $('lb-media').innerHTML = e.kind === 'video'
+    ? `<video src="${escHtml(e.url)}" controls autoplay playsinline></video>`
+    : `<img src="${escHtml(e.url)}" alt="${escHtml(e.name)} 的照片">`;
+  $('lb-who').textContent = e.name;
+  $('lb-msg').textContent = e.message || '';
+  $('lightbox').hidden = false;
+  $('reels').classList.add('paused');
 }
-$('film').addEventListener('click', (ev) => {
-  const pic = ev.target.closest('.pic');
-  const v = pic?.querySelector('video');
-  if (!v) return;
-  filmTouched = true;
-  if (v.paused) {
-    stopFilmVideos(v);
-    v.play().then(() => v.closest('.cell').classList.add('playing')).catch(() => {});
-    v.onended = () => v.closest('.cell').classList.remove('playing');
-  } else {
-    v.pause(); v.closest('.cell').classList.remove('playing');
-  }
+function stopFilmVideos() {   // 關掉放大檢視
+  $('lb-media').innerHTML = '';
+  $('lightbox').hidden = true;
+  $('reels').classList.remove('paused');
+}
+$('reels').addEventListener('click', (ev) => {
+  const b = ev.target.closest('.slot');
+  if (b) openLightbox(filmItems[+b.dataset.i]);
 });
-// 沒人碰的時候，膠卷每 4 秒自動捲到下一格；碰過就停，交給賓客自己滑
-['pointerdown', 'wheel', 'touchstart'].forEach((t) => $('film').addEventListener(t, () => { filmTouched = true; }, { passive: true }));
-filmTimer = setInterval(() => {
-  const film = $('film');
-  if (filmTouched || film.hidden || $('s-home').hidden || document.hidden) return;
-  const cell = film.querySelector('.cell');
-  if (!cell) return;
-  const step = cell.offsetWidth + 12;
-  const atEnd = film.scrollLeft + film.clientWidth >= film.scrollWidth - 4;
-  film.scrollTo({ left: atEnd ? 0 : film.scrollLeft + step, behavior: 'smooth' });
-}, 4000);
+$('lb-close').onclick = stopFilmVideos;
+$('lightbox').addEventListener('click', (ev) => { if (ev.target === $('lightbox')) stopFilmVideos(); });
 
 if (!RECORD) {
   loadFilm();
