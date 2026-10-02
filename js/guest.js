@@ -14,6 +14,25 @@ document.body.classList.add('at-home');
 setTimeout(() => drape.open(), 500);
 setTimeout(() => document.body.classList.add('revealed'), 2300);
 
+/* ---------- 取景框、預覽框套上畫框素材（每位賓客隨機一個長方形畫框） ---------- */
+const frames = await fetch('frames/frames.json').then((r) => r.json()).catch(() => []);
+const rectFrames = [0, 3, 1].map((i) => frames[i]).filter(Boolean);   // 金色雕花、木框、方框
+const pf = rectFrames[Math.floor(Math.random() * rectFrames.length)];
+function applyFrame(el) {
+  if (!pf) return;
+  const [x, y, w, h] = pf.win;
+  const win = document.createElement('div');
+  win.className = 'win';
+  win.append(...el.childNodes);
+  win.style.cssText = `left:${x * 100}%;top:${y * 100}%;width:${w * 100}%;height:${h * 100}%`;
+  el.append(win);
+  el.insertAdjacentHTML('beforeend', `<img class="pf-img" src="${pf.src}" alt="">`);
+  el.style.aspectRatio = String((0.8 * h) / w);   // 把畫框稍微拉寬或壓窄，讓挖空處剛好是 4:5
+  el.classList.add('pframe');
+}
+document.querySelectorAll('.viewer, .thumb').forEach(applyFrame);
+const thumbWin = () => $('thumb').querySelector('.win') || $('thumb');
+
 function show(id) {
   document.querySelectorAll('main > section').forEach((s) => (s.hidden = s.id !== id));
   document.body.classList.toggle('at-home', id === 's-home');
@@ -214,8 +233,8 @@ async function compressImage(file, maxSide = 1600) {
 /* ---------- 填名字、送出 ---------- */
 function toDetails() {
   const url = URL.createObjectURL(pending.blob);
-  $('thumb').querySelectorAll('video, img').forEach((n) => n.remove());
-  $('thumb').insertAdjacentHTML('afterbegin', pending.kind === 'video'
+  thumbWin().querySelectorAll('video, img').forEach((n) => n.remove());
+  thumbWin().insertAdjacentHTML('afterbegin', pending.kind === 'video'
     ? `<video src="${url}" muted playsinline autoplay loop></video>`
     : `<img src="${url}" alt="你的照片">`);
   showError($('form-error'), '');

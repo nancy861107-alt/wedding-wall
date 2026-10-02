@@ -28,6 +28,13 @@
   .viewer { aspect-ratio: 4 / 5; margin: 10px 6px 20px; background: #1d0f0d; }
   .viewer video, .viewer img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .viewer video.mirror { transform: scaleX(-1); }
+
+  /* 取景框、預覽框用畫框素材（frames/）；.win 是畫框挖空的位置，固定 4:5 */
+  .pframe { position: relative; background: none; }
+  .pframe .win { position: absolute; overflow: hidden; background: #1d0f0d; }
+  .pframe .win video, .pframe .win img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pframe .pf-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none;
+    filter: drop-shadow(0 6px 10px rgba(60,15,10,.3)); }
   .timer {
     position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 2;
     padding: 4px 14px; border-radius: 999px; font: 600 1.1rem var(--serif);
@@ -103,7 +110,7 @@
 
   <!-- 錄影 -->
   <section id="s-record" hidden>
-    <div class="viewer gilt">
+    <div class="viewer">
       <video id="cam" class="mirror" playsinline muted autoplay></video>
       <div class="flash" id="flash"></div>
       <span class="timer" id="timer">0:60</span>
@@ -120,7 +127,7 @@
 
   <!-- 錄完預覽 -->
   <section id="s-review" hidden>
-    <div class="viewer gilt"><video id="review" playsinline controls></video><img id="review-img" alt="剛拍的照片" hidden></div>
+    <div class="viewer"><video id="review" playsinline controls></video><img id="review-img" alt="剛拍的照片" hidden></div>
     <div class="two">
       <button class="plaque ghost" id="redo">重錄</button>
       <button class="plaque" id="use">用這段</button>
@@ -129,7 +136,7 @@
 
   <!-- 填名字 -->
   <section id="s-details" hidden>
-    <div class="thumb gilt" id="thumb"></div>
+    <div class="thumb" id="thumb"></div>
     <form id="form" novalidate>
       <label for="name">你的名字</label>
       <input id="name" maxlength="20" autocomplete="name" placeholder="例如：大學室友 阿明" required>
