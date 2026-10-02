@@ -110,17 +110,14 @@
 
   .filmwall { position: relative; flex: 1; min-height: 0; margin: 0 -20px; overflow: hidden; }
   .reels { position: absolute; left: 50%; top: 50%; width: 190%; height: 190%; translate: -50% -50%; rotate: -14deg;
-    display: flex; justify-content: center; gap: 3vw; }
-  .reel { flex: none; width: 38vw; max-width: 210px; opacity: .92; }
-  /* 中間那條是主角：放大、疊在最上面 */
-  .reel:nth-child(2) { width: 66vw; max-width: 360px; opacity: 1; position: relative; z-index: 1; }
-  .reel:nth-child(2) .slot .tag { font-size: 1rem; padding: 22px 8px 9px; }
-  .reel:nth-child(2) .slot .vid { width: 30px; height: 30px; line-height: 30px; font-size: .8rem; right: 10px; top: 10px; }
+    display: flex; justify-content: center; gap: 0; }
+  /* 三條一樣大，緊貼在一起 */
+  .reel { flex: none; width: 52vw; max-width: 290px; }
   .reel-track { display: flex; flex-direction: column; animation: flow var(--dur, 60s) linear infinite; will-change: transform; }
   .reel:nth-child(even) .reel-track { animation-direction: reverse; }
   .reels.paused .reel-track { animation-play-state: paused; }
   @keyframes flow { to { transform: translateY(-50%); } }
-  .tile { position: relative; flex: none; filter: drop-shadow(0 6px 10px rgba(40,10,5,.3)); }
+  .tile { position: relative; flex: none; }
   .tile .strip { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .slot { position: absolute; overflow: hidden; background: #2a1512; cursor: pointer; border: 0; padding: 0; }
   .slot img, .slot video { width: 100%; height: 100%; object-fit: cover; display: block; }
