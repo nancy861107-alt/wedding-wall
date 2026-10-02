@@ -432,31 +432,62 @@ async function loadFilm() {
   setTimeout(scatterFilmDeco, 120);
 }
 
-// 膠卷兩旁的空白處隨機放小插圖：不壓到膠卷，彼此也不重疊
-function scatterFilmDeco() {
+// 膠卷兩旁的空白處懸浮著小插圖：不壓到膠卷、彼此不重疊；大約每 5 秒換掉其中一個
+const DECO_SWAP_MS = 5000;
+let decos = [];   // [{ x, y, name, el }]
+let decoSize = 60;
+
+function decoSpot(skip) {
   const wall = $('film'), reels = $('reels');
-  if (wall.hidden) return;
   const W = wall.clientWidth, H = wall.clientHeight;
   const band = [...reels.querySelectorAll('.reel')].reduce((n, r) => n + r.offsetWidth, 0);
   const ang = (parseFloat(getComputedStyle(reels).rotate) || 0) * Math.PI / 180;
-  const size = Math.max(44, Math.min(W, H) * (W < 700 ? 0.13 : 0.105));
-  const want = W < 700 ? 6 : 8;
-  const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, want);
-  const placed = [];
-  $('film-deco').innerHTML = picks.map((n, i) => {
-    for (let k = 0; k < 250; k++) {
-      const x = rnd(size * 0.55, W - size * 0.55), y = rnd(size * 0.55, H - size * 0.55);
-      // 把點轉回膠卷的座標，看離膠卷帶夠不夠遠
-      const dx = x - W / 2, dy = y - H / 2;
-      const across = Math.abs(dx * Math.cos(ang) + dy * Math.sin(ang));
-      if (across < band / 2 + size * 0.7) continue;
-      if (placed.some(([px, py]) => Math.hypot(px - x, py - y) < size * 1.3)) continue;
-      placed.push([x, y]);
-      return `<img src="deco/${n}.png" alt="" style="left:${x - size / 2}px;top:${y - size / 2}px;--h:${size}px;--r:${rnd(-18, 18)}deg;--d:${0.3 + i * 0.12}s">`;
-    }
-    return '';
-  }).join('');
+  for (let k = 0; k < 250; k++) {
+    const x = rnd(decoSize * 0.55, W - decoSize * 0.55), y = rnd(decoSize * 0.6, H - decoSize * 0.6);
+    // 把點轉回膠卷的座標，看離膠卷帶夠不夠遠
+    const across = Math.abs((x - W / 2) * Math.cos(ang) + (y - H / 2) * Math.sin(ang));
+    if (across < band / 2 + decoSize * 0.7) continue;
+    if (decos.some((d) => d !== skip && Math.hypot(d.x - x, d.y - y) < decoSize * 1.3)) continue;
+    return { x, y };
+  }
+  return null;
 }
+
+function addDeco(name, spot, delay) {
+  const el = document.createElement('img');
+  el.src = `deco/${name}.png`;
+  el.alt = '';
+  el.style.cssText = `left:${spot.x - decoSize / 2}px;top:${spot.y - decoSize / 2}px;--h:${decoSize}px;--r:${rnd(-18, 18)}deg;--d:${delay}s;--bob:${rnd(3, 5).toFixed(1)}s`;
+  $('film-deco').append(el);
+  const d = { ...spot, name, el };
+  decos.push(d);
+  return d;
+}
+
+function scatterFilmDeco() {
+  const wall = $('film');
+  if (wall.hidden) return;
+  const W = wall.clientWidth, H = wall.clientHeight;
+  decoSize = Math.max(44, Math.min(W, H) * (W < 700 ? 0.13 : 0.105));
+  $('film-deco').innerHTML = '';
+  decos = [];
+  const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, W < 700 ? 6 : 8);
+  picks.forEach((n, i) => { const spot = decoSpot(); if (spot) addDeco(n, spot, 0.3 + i * 0.12); });
+}
+
+// 換掉一個：舊的縮小淡出，另一張沒出現過的插圖從別的空位冒出來
+function swapDeco() {
+  if ($('film').hidden || $('s-home').hidden || document.hidden || !$('lightbox').hidden || !decos.length) return;
+  const old = decos[Math.floor(Math.random() * decos.length)];
+  const unused = MINIS.filter((n) => !decos.some((d) => d.name === n));
+  const name = (unused.length ? unused : MINIS)[Math.floor(Math.random() * (unused.length || MINIS.length))];
+  const spot = decoSpot(old) || { x: old.x, y: old.y };
+  old.el.classList.add('out');
+  setTimeout(() => old.el.remove(), 700);
+  decos = decos.filter((d) => d !== old);
+  addDeco(name, spot, 0.5);
+}
+setInterval(swapDeco, DECO_SWAP_MS);
 addEventListener('resize', () => { clearTimeout(scatterFilmDeco.t); scatterFilmDeco.t = setTimeout(scatterFilmDeco, 300); });
 
 function openLightbox(e) {
