@@ -429,7 +429,35 @@ async function loadFilm() {
   setTimeout(() => document.querySelectorAll('.reel-track').forEach((t, i) => {
     t.style.setProperty('--dur', `${Math.round(t.scrollHeight / 2 / (FLOW_PX_PER_SEC + i * 5))}s`);
   }), 50);
+  setTimeout(scatterFilmDeco, 120);
 }
+
+// 膠卷兩旁的空白處隨機放小插圖：不壓到膠卷，彼此也不重疊
+function scatterFilmDeco() {
+  const wall = $('film'), reels = $('reels');
+  if (wall.hidden) return;
+  const W = wall.clientWidth, H = wall.clientHeight;
+  const band = [...reels.querySelectorAll('.reel')].reduce((n, r) => n + r.offsetWidth, 0);
+  const ang = (parseFloat(getComputedStyle(reels).rotate) || 0) * Math.PI / 180;
+  const size = Math.max(44, Math.min(W, H) * (W < 700 ? 0.13 : 0.105));
+  const want = W < 700 ? 6 : 8;
+  const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, want);
+  const placed = [];
+  $('film-deco').innerHTML = picks.map((n, i) => {
+    for (let k = 0; k < 250; k++) {
+      const x = rnd(size * 0.55, W - size * 0.55), y = rnd(size * 0.55, H - size * 0.55);
+      // 把點轉回膠卷的座標，看離膠卷帶夠不夠遠
+      const dx = x - W / 2, dy = y - H / 2;
+      const across = Math.abs(dx * Math.cos(ang) + dy * Math.sin(ang));
+      if (across < band / 2 + size * 0.7) continue;
+      if (placed.some(([px, py]) => Math.hypot(px - x, py - y) < size * 1.3)) continue;
+      placed.push([x, y]);
+      return `<img src="deco/${n}.png" alt="" style="left:${x - size / 2}px;top:${y - size / 2}px;--h:${size}px;--r:${rnd(-18, 18)}deg;--d:${0.3 + i * 0.12}s">`;
+    }
+    return '';
+  }).join('');
+}
+addEventListener('resize', () => { clearTimeout(scatterFilmDeco.t); scatterFilmDeco.t = setTimeout(scatterFilmDeco, 300); });
 
 function openLightbox(e) {
   $('lb-media').innerHTML = e.kind === 'video'

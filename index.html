@@ -106,7 +106,7 @@
   body.has-film .masthead .date { font-size: .95rem; margin-top: 2px; }
   /* 有膠卷時布幕再往兩邊拉開一點，讓出中間的位置 */
   #drape { transform-origin: 50% 0; transition: opacity .5s, transform 1.2s cubic-bezier(.6,0,.2,1); }
-  body.has-film #drape { transform: scaleX(1.5); }
+  body.has-film #drape { opacity: 0; transition: opacity 1.2s ease .6s; }   /* 膠卷頁不留布幕，開場拉開後淡出 */
 
   .filmwall { position: relative; flex: 1; min-height: 0; margin: 0 -20px; overflow: hidden; }
   .reels { position: absolute; left: 50%; top: 50%; width: 190%; height: 190%; translate: -50% -50%; rotate: -14deg;
@@ -140,6 +140,11 @@
   .slot .vid { position: absolute; right: 7px; top: 7px; width: 22px; height: 22px; border-radius: 50%;
     background: rgba(248,228,206,.9); color: var(--wine); font-size: .6rem; line-height: 22px; text-align: center; padding-left: 2px; }
 
+  /* 膠卷兩旁空白處隨機點綴的小插圖 */
+  .film-deco { position: absolute; inset: 0; pointer-events: none; }
+  .film-deco img { position: absolute; height: var(--h); rotate: var(--r); opacity: 0;
+    animation: mini-in .8s cubic-bezier(.3,1.4,.5,1) var(--d) forwards; }
+
   /* 點一格放大看：影片可播放，下面是名字和留言 */
   .lightbox { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
     background: rgba(46,10,8,.86); animation: rise .3s ease both; }
@@ -172,7 +177,7 @@
       <p class="date" data-date></p>
     </header>
     <p class="invite" id="invite">影片最長 60 秒，也可以拍照<br>新人確認後，會在會場大螢幕播出</p>
-    <div class="filmwall" id="film" hidden aria-label="大家的祝福"><div class="reels" id="reels"></div></div>
+    <div class="filmwall" id="film" hidden aria-label="大家的祝福"><div class="film-deco" id="film-deco" aria-hidden="true"></div><div class="reels" id="reels"></div></div>
     <div class="actions">
       <button class="plaque" id="go-video">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
