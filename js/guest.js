@@ -357,7 +357,7 @@ function petals() {
 
 
 /* ---------- 展示首頁：斜斜流動的膠卷牆（最新 12 則已通過的祝福） ---------- */
-const FILM_MAX = 12, REELS = 3, FLOW_PX_PER_SEC = 26;
+const FILM_MAX = 12, REELS = 2, FLOW_PX_PER_SEC = 26;
 const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 let filmIds = '', filmItems = [];
 const strip = RECORD ? null : await fetch('film/strip.json').then((r) => r.json()).catch(() => null);
