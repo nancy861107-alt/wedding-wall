@@ -31,6 +31,9 @@
 
   /* 取景框、預覽框用畫框素材（frames/）；.win 是畫框挖空的位置，固定 4:5 */
   .pframe { position: relative; background: none; }
+  /* 取景框盡量放大：左右幾乎貼齊螢幕 */
+  .viewer.pframe { margin: 0 -14px 18px; }
+  body:not(.at-home) main { padding-top: 28px; }
   .pframe .win { position: absolute; overflow: hidden; background: #1d0f0d; }
   .pframe .win video, .pframe .win img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .pframe .pf-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none;
