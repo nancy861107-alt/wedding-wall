@@ -481,7 +481,7 @@ function scatterFilmDeco() {
   const wall = $('film');
   if (wall.hidden) return;
   const W = wall.clientWidth, H = wall.clientHeight;
-  decoSize = Math.max(44, Math.min(W, H) * (W < 700 ? 0.13 : 0.105));
+  decoSize = Math.max(52, Math.min(W, H) * (W < 700 ? 0.165 : 0.145));
   $('film-deco').innerHTML = '';
   decos = [];
   const picks = [...MINIS].sort(() => Math.random() - 0.5).slice(0, W < 700 ? 6 : 8);
