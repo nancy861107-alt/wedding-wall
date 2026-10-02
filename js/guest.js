@@ -50,7 +50,12 @@ function show(id) {
   document.body.classList.toggle('at-home', id === 's-home');
   window.scrollTo(0, 0);
 }
-function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
+// 在這台電腦預覽（localhost）時不顯示「沒辦法開啟相機」，因為預覽視窗本來就會擋相機；正式網址照常顯示
+const IS_PREVIEW = ['localhost', '127.0.0.1'].includes(location.hostname);
+function showError(el, msg) {
+  if (IS_PREVIEW && el.id === 'cam-error') msg = '';
+  el.textContent = msg; el.hidden = !msg;
+}
 
 // 目前要送出的內容
 let pending = null; // { kind, blob }
