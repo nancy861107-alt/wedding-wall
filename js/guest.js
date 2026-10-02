@@ -434,76 +434,27 @@ async function loadFilm() {
   setTimeout(scatterFilmDeco, 120);
 }
 
-// 膠卷兩旁各排一列小插圖：跟膠卷同樣的斜度、間距一樣、大小一樣、不歪斜；大約每 5 秒原地換掉其中一張
-const DECO_SWAP_MS = 5000;
-let decos = [];   // [{ x, y, name, el }]
-let decoSize = 60;
-
-// 插圖塞進 decoSize 的正方形裡：橫的以寬為準、直的以高為準
-function decoBox(name) {
-  const r = MINI_RATIO[name] || 1;
-  return r >= 1 ? { w: decoSize, h: decoSize / r } : { w: decoSize * r, h: decoSize };
-}
-
-// 算出兩列的固定位置（只留完整落在畫面內的）
-function decoSlots() {
-  const wall = $('film'), reels = $('reels');
-  const W = wall.clientWidth, H = wall.clientHeight;
-  const band = [...reels.querySelectorAll('.reel')].reduce((n, r) => n + r.offsetWidth, 0);
-  const ang = (parseFloat(getComputedStyle(reels).rotate) || 0) * Math.PI / 180;
-  const off = band / 2 + decoSize * 0.72;        // 離膠卷中心線的距離
-  const step = decoSize * 1.75;                  // 同一列裡每張的間距
-  const half = decoSize / 2 + 8, n = Math.ceil(Math.hypot(W, H) / step);
-  const slots = [];
-  for (const side of [-1, 1]) {
-    for (let i = -n; i <= n; i++) {
-      const along = (i + (side > 0 ? 0.5 : 0)) * step;     // 左右兩列錯開半格
-      const x = W / 2 + side * off * Math.cos(ang) - along * Math.sin(ang);
-      const y = H / 2 + side * off * Math.sin(ang) + along * Math.cos(ang);
-      if (x < half || x > W - half || y < half + 10 || y > H - half) continue;
-      slots.push({ x, y });
-    }
-  }
-  return slots;
-}
-
-function setDeco(d, name, delay) {
-  const { w, h } = decoBox(name);
-  const el = document.createElement('img');
-  el.src = `deco/${name}.png`;
-  el.alt = '';
-  el.style.cssText = `left:${d.x - w / 2}px;top:${d.y - h / 2}px;--h:${h}px;--r:0deg;--d:${delay}s;--bob:${rnd(3.2, 4.6).toFixed(1)}s`;
-  $('film-deco').append(el);
-  d.name = name; d.el = el;
-}
-
+// 小插圖變成淡淡的背景花紋：縮小、整齊地鋪滿紙面（像包裝紙的印花），不會動；膠卷疊在上面
 function scatterFilmDeco() {
   const wall = $('film');
   if (wall.hidden) return;
   const W = wall.clientWidth, H = wall.clientHeight;
-  decoSize = Math.max(48, Math.min(W, H) * (W < 700 ? 0.14 : 0.13));
-  $('film-deco').innerHTML = '';
-  decos = decoSlots();
-  // 依序發不同的圖，8 張用完再重新洗牌，相鄰的不會一樣
-  let bag = [];
-  decos.forEach((d, i) => {
-    if (!bag.length) bag = [...MINIS].sort(() => Math.random() - 0.5);
-    setDeco(d, bag.pop(), 0.3 + i * 0.1);
-  });
+  const cell = W < 700 ? 84 : 112;              // 每格的大小
+  const size = cell * 0.5;                      // 插圖塞進這麼大的正方形
+  const cols = Math.ceil(W / cell) + 1, rows = Math.ceil(H / cell) + 1;
+  let html = '';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      // 每排往右錯開半格；圖案依固定順序輪流，斜向看過去是同一張
+      const name = MINIS[(c + r * 3) % MINIS.length];
+      const ratio = MINI_RATIO[name] || 1;
+      const w = ratio >= 1 ? size : size * ratio, h = ratio >= 1 ? size / ratio : size;
+      const x = c * cell + (r % 2 ? cell / 2 : 0) - cell / 4, y = r * cell + cell / 2 - 10;
+      html += `<img class="${name === 'bow' || name === 'love2' ? 'solid' : ''}" src="deco/${name}.png" alt="" style="left:${x - w / 2}px;top:${y - h / 2}px;height:${h}px">`;
+    }
+  }
+  $('film-deco').innerHTML = html;
 }
-
-// 原地換掉一張：舊的縮小淡出，同一個位置換一張目前畫面上沒有的插圖
-function swapDeco() {
-  if ($('film').hidden || $('s-home').hidden || document.hidden || !$('lightbox').hidden || !decos.length) return;
-  const d = decos[Math.floor(Math.random() * decos.length)];
-  const unused = MINIS.filter((n) => !decos.some((x) => x.name === n));
-  const pool = unused.length ? unused : MINIS.filter((n) => n !== d.name);
-  const old = d.el;
-  old.classList.add('out');
-  setTimeout(() => old.remove(), 700);
-  setDeco(d, pool[Math.floor(Math.random() * pool.length)], 0.6);
-}
-setInterval(swapDeco, DECO_SWAP_MS);
 addEventListener('resize', () => { clearTimeout(scatterFilmDeco.t); scatterFilmDeco.t = setTimeout(scatterFilmDeco, 300); });
 
 function openLightbox(e) {

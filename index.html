@@ -140,15 +140,10 @@
   .slot .vid { position: absolute; right: 7px; top: 7px; width: 22px; height: 22px; border-radius: 50%;
     background: rgba(248,228,206,.9); color: var(--wine); font-size: .6rem; line-height: 22px; text-align: center; padding-left: 2px; }
 
-  /* 膠卷兩旁空白處隨機點綴的小插圖 */
-  .film-deco { position: absolute; inset: 0; pointer-events: none; }
-  .film-deco img { position: absolute; height: var(--h); rotate: var(--r); opacity: 0;
-    filter: drop-shadow(0 8px 8px rgba(80,20,10,.16));
-    animation: mini-in .8s cubic-bezier(.3,1.4,.5,1) var(--d) forwards,
-               deco-bob var(--bob, 4s) ease-in-out calc(var(--d) + .8s) infinite alternate; }
-  .film-deco img.out { animation: mini-out .7s ease forwards; }
-  @keyframes deco-bob { from { translate: 0 0; } to { translate: 0 -10px; } }
-  @keyframes mini-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .5; } }
+  /* 小插圖當背景花紋：很淡、整齊鋪滿、不會動 */
+  .film-deco { position: absolute; inset: 0; pointer-events: none; overflow: hidden; animation: rise 1.2s ease .6s both; }
+  .film-deco img { position: absolute; opacity: .2; }
+  .film-deco img.solid { opacity: .13; }   /* 深紅實心的圖比較重，再淡一點 */
 
   /* 點一格放大看：影片可播放，下面是名字和留言 */
   .lightbox { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
