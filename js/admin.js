@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { isDemo, listEntries, setStatus, totalBytes, onChange, currentUser, signIn } from './store.js';
 import './ornament.js';
+import './paw.js';
 
 const $ = (id) => document.getElementById(id);
 document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CONFIG.couple));

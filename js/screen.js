@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { isDemo, listEntries, onChange } from './store.js';
 import './ornament.js';
+import './paw.js';
 import { createDrape } from './drape.js';
 
 const $ = (id) => document.getElementById(id);
