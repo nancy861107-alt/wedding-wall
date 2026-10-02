@@ -111,8 +111,12 @@
   .filmwall { position: relative; flex: 1; min-height: 0; margin: 0 -20px; overflow: hidden;
     -webkit-mask-image: linear-gradient(transparent, #000 9%); mask-image: linear-gradient(transparent, #000 9%); }
   .reels { position: absolute; left: 50%; top: 50%; width: 190%; height: 190%; translate: -50% -50%; rotate: -14deg;
-    display: flex; justify-content: center; gap: 4vw; }
-  .reel { flex: none; width: 46vw; max-width: 250px; }
+    display: flex; justify-content: center; gap: 3vw; }
+  .reel { flex: none; width: 38vw; max-width: 210px; opacity: .92; }
+  /* 中間那條是主角：放大、疊在最上面 */
+  .reel:nth-child(2) { width: 66vw; max-width: 360px; opacity: 1; position: relative; z-index: 1; }
+  .reel:nth-child(2) .slot .tag { font-size: 1rem; padding: 22px 8px 9px; }
+  .reel:nth-child(2) .slot .vid { width: 30px; height: 30px; line-height: 30px; font-size: .8rem; right: 10px; top: 10px; }
   .reel-track { display: flex; flex-direction: column; animation: flow var(--dur, 60s) linear infinite; will-change: transform; }
   .reel:nth-child(even) .reel-track { animation-direction: reverse; }
   .reels.paused .reel-track { animation-play-state: paused; }
