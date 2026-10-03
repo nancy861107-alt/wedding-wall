@@ -18,6 +18,9 @@ if (!RECORD) {
   document.title = '大家的祝福';
 }
 
+// 「大家的祝福」按鈕通往膠卷展示頁；預覽用的 ?demo 一起帶過去
+$('go-wall').href = `./${new URLSearchParams(location.search).has('demo') ? '?demo' : ''}`;
+
 const drape = createDrape($('drape'), { spread: [0.27, 0.10, 0.22] });
 
 // 首頁按鈕和連結的寬度，依它們所在高度的布幕開口來縮，不要壓到布幕
