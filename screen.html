@@ -9,6 +9,7 @@
 <style>
   html, body { height: 100%; overflow: hidden; cursor: none; }
   body.awake { cursor: url('deco/paw-cursor.png') 16 16, default; }   /* 滑鼠動的時候才出現貓掌游標 */
+  body:not(.awake) .paw-cursor-el { opacity: 0; }   /* 滑鼠停著不動就把貓掌游標藏起來 */
 
   .stage { position: fixed; inset: 0; z-index: 1; display: grid; grid-template-rows: 16vh minmax(0, 1fr) 15vh 2vh; justify-items: center; }
   .heading { align-self: end; text-align: center; padding-bottom: 2vh; }

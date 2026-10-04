@@ -1,3 +1,4 @@
+import './paw-cursor.js';
 // 每次點按（滑鼠或手指）都在那個位置蓋一個貓掌印，彈出來再淡掉。
 const style = document.createElement('style');
 style.textContent = `
