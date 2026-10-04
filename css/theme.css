@@ -93,3 +93,16 @@ label { display: block; margin: 18px 0 6px; font-size: .95rem; color: var(--wine
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* 游標換成貓掌（手機沒有游標，不受影響） */
+html, body {
+  cursor: url('../deco/paw-cursor.png') 16 16, auto;
+  cursor: -webkit-image-set(url('../deco/paw-cursor.png') 1x, url('../deco/paw-cursor@2x.png') 2x) 16 16, auto;
+  cursor: image-set(url('../deco/paw-cursor.png') 1x, url('../deco/paw-cursor@2x.png') 2x) 16 16, auto;
+}
+a, button, label, .slot, [role="tab"] {
+  cursor: url('../deco/paw-cursor.png') 16 16, pointer;
+  cursor: -webkit-image-set(url('../deco/paw-cursor.png') 1x, url('../deco/paw-cursor@2x.png') 2x) 16 16, pointer;
+  cursor: image-set(url('../deco/paw-cursor.png') 1x, url('../deco/paw-cursor@2x.png') 2x) 16 16, pointer;
+}
+input, textarea { cursor: text; }
