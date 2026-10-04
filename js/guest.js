@@ -18,6 +18,14 @@ if (!RECORD) {
   document.title = '大家的祝福';
 }
 
+// 展示頁右下（或其他位置）的「我也要留祝福」按鈕，回到錄影拍照頁
+if (!RECORD) {
+  const q = new URLSearchParams(location.search);
+  $('wall-btn').href = `./?record${q.has('demo') ? '&demo' : ''}`;
+  $('wall-btn').classList.add(q.get('wallbtn') || 'a');
+  $('wall-btn').hidden = false;
+}
+
 // 「大家的祝福」按鈕通往膠卷展示頁；預覽用的 ?demo 一起帶過去
 $('go-wall').href = `./${new URLSearchParams(location.search).has('demo') ? '?demo' : ''}`;
 
