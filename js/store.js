@@ -1,8 +1,11 @@
 // 資料層：示範模式用 IndexedDB + BroadcastChannel；正式模式用 Supabase。
 import { CONFIG } from './config.js';
 
-// 網址加 ?demo 可強制用示範模式（本機假資料），方便調整外觀
-export const isDemo = !CONFIG.supabaseUrl || new URLSearchParams(location.search).has('demo');
+// 示範模式（本機假資料）：在這台電腦預覽（localhost）時預設開啟，網址加 ?live 才讀 Supabase 真資料；
+// 放上網路後一律讀真資料，除非網址加 ?demo
+const q = new URLSearchParams(location.search);
+const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+export const isDemo = !CONFIG.supabaseUrl || q.has('demo') || (isLocal && !q.has('live'));
 
 /* ---------- Supabase ---------- */
 let sbPromise = null;
