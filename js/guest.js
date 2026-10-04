@@ -9,8 +9,8 @@ document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CON
 document.querySelectorAll('[data-date]').forEach((el) => (el.textContent = CONFIG.date));
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
 
-// 兩種首頁：預設是展示頁（膠卷）；網址加 ?record 是錄影拍照頁（QR code 連到這裡）
-const RECORD = new URLSearchParams(location.search).has('record');
+// 兩種首頁：預設是錄影拍照頁（QR code 連到這裡）；網址加 ?wall 是膠卷展示頁
+const RECORD = !new URLSearchParams(location.search).has('wall');
 document.body.classList.add(RECORD ? 'mode-record' : 'mode-show');
 if (!RECORD) {
   $('kicker').textContent = '來自親友的祝福';
@@ -21,12 +21,12 @@ if (!RECORD) {
 // 展示頁左上角的「我也要留祝福」，回到錄影拍照頁
 if (!RECORD) {
   const q = new URLSearchParams(location.search);
-  $('wall-btn').href = `./?record${q.has('demo') ? '&demo' : ''}`;
+  $('wall-btn').href = `./${q.has('demo') ? '?demo' : ''}`;
   $('wall-btn').hidden = false;
 }
 
 // 「大家的祝福」按鈕通往膠卷展示頁；預覽用的 ?demo 一起帶過去
-$('go-wall').href = `./${new URLSearchParams(location.search).has('demo') ? '?demo' : ''}`;
+$('go-wall').href = `./?wall${new URLSearchParams(location.search).has('demo') ? '&demo' : ''}`;
 
 const drape = createDrape($('drape'), { spread: [0.27, 0.10, 0.22] });
 

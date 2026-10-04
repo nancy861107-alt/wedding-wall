@@ -98,7 +98,7 @@
   /* ---------- 展示首頁：斜斜的膠卷牆，用 film/strip.png 素材，一直流動 ---------- */
   html, body { overflow-x: clip; }
   .alt-q { display: none; }   /* 會被布幕蓋到，先收起來 */
-  /* 展示頁（預設）不放錄影拍照按鈕；網址加 ?record 才是錄影拍照頁 */
+  /* 膠卷展示頁（?wall）不放錄影拍照按鈕 */
   body.mode-show .actions, body.mode-show .alt { display: none; }
   body.mode-show.has-film .invite { display: none; }
   body.has-film.at-home main { padding-top: 0; padding-bottom: 0; max-width: none; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
@@ -194,7 +194,7 @@
       <button class="plaque" id="go-photo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg>
         拍一張照片</button>
-      <a class="plaque ghost" id="go-wall" href="./">
+      <a class="plaque ghost" id="go-wall" href="./?wall">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="1.5"/><path d="M5 8h14M5 16h14"/><path d="M7.5 4.5v1M7.5 10.5v3M7.5 18.5v1M16.5 4.5v1M16.5 10.5v3M16.5 18.5v1"/></svg>
         大家的祝福</a>
     </div>
@@ -266,7 +266,7 @@
   </section>
 </main>
 
-<a class="wall-btn" id="wall-btn" href="./?record" hidden>
+<a class="wall-btn" id="wall-btn" href="./" hidden>
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
   <span>我也要留祝福</span></a>
 

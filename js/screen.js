@@ -9,7 +9,7 @@ document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CON
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
 
 /* ---------- QR code 指向賓客頁（LINE 內開啟時自動跳外部瀏覽器） ---------- */
-const guestUrl = new URL('./?record&openExternalBrowser=1', location.href).href;
+const guestUrl = new URL('./?openExternalBrowser=1', location.href).href;
 const qr = qrcode(0, 'M');
 qr.addData(guestUrl);
 qr.make();
