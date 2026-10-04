@@ -48,6 +48,13 @@
   .idle .qr svg, .idle .qr img { width: 100%; height: auto; display: block; }
   .idle p { margin: 0; font-size: 2.8vh; letter-spacing: .12em; }
 
+  /* 沒登入時的擋門畫面 */
+  .gate { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2vh; text-align: center; padding: 24px; }
+  .gate h1 { margin: 0; font-size: clamp(2.6rem, 8vh, 4.5rem); }
+  .gate p { margin: 0; font-size: 1.1rem; color: var(--wine-soft); }
+  .gate .plaque { width: auto; padding: 14px 28px; }
+  body:has(.gate) { cursor: auto; }
+
   #drape { z-index: 20; }
 
   /* 隨機插圖裝飾（蝴蝶結、貓咪），每換一則重新擺 */

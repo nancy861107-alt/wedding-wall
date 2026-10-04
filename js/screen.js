@@ -1,10 +1,17 @@
 import { CONFIG } from './config.js';
-import { isDemo, listEntries, onChange } from './store.js';
+import { isDemo, listEntries, onChange, currentUser } from './store.js';
 import './ornament.js';
 import './paw.js';
 import { createDrape } from './drape.js';
 
 const $ = (id) => document.getElementById(id);
+
+// 大螢幕只能由登入審核頁的人開啟；沒登入就擋下，請他先去審核頁
+if (!(await currentUser())) {
+  document.body.innerHTML = `<div class="gate"><h1 class="script">Backstage only</h1>
+    <p>祝福大螢幕要從審核頁開啟</p><a class="plaque" href="admin.html">前往審核頁登入</a></div>`;
+  throw new Error('need login');
+}
 document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CONFIG.couple));
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
 
