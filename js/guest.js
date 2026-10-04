@@ -413,16 +413,22 @@ async function loadFilm() {
   if (!strip) return;
   let items = [];
   try { items = (await listEntries('approved')).reverse().slice(0, FILM_MAX); } catch { return; }
-  const ids = items.map((e) => e.id).join();
+  const ids = items.map((e) => e.id).join() || 'empty';
   if (ids === filmIds) return;
-  filmIds = ids; filmItems = items;
-  $('film').hidden = !items.length;
-  document.body.classList.toggle('has-film', items.length > 0);
-  if (!items.length) return;
+  filmIds = ids;
+  // 還沒有任何通過的祝福：膠卷照樣流動，格子裡先寫「等你的祝福」，點了去錄影拍照頁
+  if (!items.length) items = Array.from({ length: 3 }, (_, i) => ({ id: `empty${i}`, placeholder: true, name: '' }));
+  filmItems = items;
+  $('film').hidden = false;
+  document.body.classList.add('has-film');
 
-  const pics = await Promise.all(items.map((e) => (e.kind === 'video' ? videoFrames(e) : [e.url])));
+  const pics = await Promise.all(items.map((e) => (e.placeholder ? [] : e.kind === 'video' ? videoFrames(e) : [e.url])));
   const slot = (idx, win) => {
     const e = items[idx], [x, y, w, h] = win.map((v) => `${v * 100}%`);
+    if (e.placeholder) {
+      return `<button class="slot empty" data-i="${idx}" style="left:${x};top:${y};width:${w};height:${h}" aria-label="留下你的祝福">
+        <span>這一格<br>等你的祝福</span></button>`;
+    }
     return `<button class="slot" data-i="${idx}" style="left:${x};top:${y};width:${w};height:${h}" aria-label="${escHtml(e.name)} 的祝福">
       ${pics[idx].map((src, f) => `<img class="${pics[idx].length > 1 ? `gif f${f}` : ''}" src="${escHtml(src)}" alt="">`).join('')}
       ${e.kind === 'video' ? '<span class="vid">▶</span>' : ''}<span class="tag">${escHtml(e.name)}</span></button>`;
@@ -484,7 +490,9 @@ function stopFilmVideos() {   // 關掉放大檢視
 }
 $('reels').addEventListener('click', (ev) => {
   const b = ev.target.closest('.slot');
-  if (b) openLightbox(filmItems[+b.dataset.i]);
+  if (!b) return;
+  if (b.classList.contains('empty')) location.href = $('wall-btn').href;   // 空格子：直接去錄影拍照
+  else openLightbox(filmItems[+b.dataset.i]);
 });
 $('lb-close').onclick = stopFilmVideos;
 $('lightbox').addEventListener('click', (ev) => { if (ev.target === $('lightbox')) stopFilmVideos(); });
