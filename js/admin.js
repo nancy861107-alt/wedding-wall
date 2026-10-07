@@ -30,11 +30,52 @@ function cardHtml(e) {
     <div class="btns">${btns}</div></article>`;
 }
 
+/* ---------- 新祝福提醒：分頁標題顯示數量、手機震動、叮一聲、跳出小通知 ---------- */
+let knownPending = null;           // 第一次載入前為 null，避免一打開就叮
+let audio = null;
+addEventListener('pointerdown', () => {   // 瀏覽器規定要先點過畫面才能出聲
+  audio ??= new (window.AudioContext || window.webkitAudioContext)();
+  audio.resume?.();
+}, { passive: true });
+
+function ding() {
+  if (!audio) return;
+  const t = audio.currentTime;
+  [880, 1320].forEach((f, i) => {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = f; o.type = 'sine';
+    g.gain.setValueAtTime(0.0001, t + i * 0.12);
+    g.gain.exponentialRampToValueAtTime(0.25, t + i * 0.12 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.12 + 0.35);
+    o.connect(g).connect(audio.destination);
+    o.start(t + i * 0.12); o.stop(t + i * 0.12 + 0.4);
+  });
+}
+
+function notifyNew(n) {
+  ding();
+  navigator.vibrate?.([120, 80, 120]);
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = `有 ${n} 則新的祝福等你審核`;
+  toast.onclick = () => document.querySelector('nav [data-tab="pending"]').click();
+  document.body.append(toast);
+  setTimeout(() => toast.remove(), 5000);
+}
+
 async function render() {
   const [pending, approved, hidden, bytes] = await Promise.all(
     [listEntries('pending'), listEntries('approved'), listEntries('hidden'), totalBytes()]);
   const lists = { pending, approved, hidden };
   for (const k in lists) $(`n-${k}`).textContent = lists[k].length || '';
+
+  document.title = pending.length ? `(${pending.length}) 祝福審核` : '祝福審核';
+  const ids = new Set(pending.map((e) => e.id));
+  if (knownPending) {
+    const fresh = [...ids].filter((id) => !knownPending.has(id)).length;
+    if (fresh) notifyNew(fresh);
+  }
+  knownPending = ids;
 
   // 待審：最舊的先審；其他：最新的在前
   const items = tab === 'pending' ? lists[tab] : [...lists[tab]].reverse();
@@ -69,6 +110,61 @@ document.querySelectorAll('nav [data-tab]').forEach((b) => (b.onclick = () => {
   $('grid').innerHTML = '';
   render();
 }));
+
+/* ---------- 一鍵下載全部祝福（影片、照片＋一份留言清單），婚後保存用 ---------- */
+const STATUS_ZH = { approved: '已通過', pending: '待審核', hidden: '已隱藏' };
+function loadJSZip() {
+  return window.JSZip ? Promise.resolve(window.JSZip) : new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    sc.onload = () => resolve(window.JSZip);
+    sc.onerror = () => reject(new Error('下載工具載入失敗，請檢查網路'));
+    document.head.append(sc);
+  });
+}
+const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+$('download-all').onclick = async () => {
+  const btn = $('download-all');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const label = btn.textContent;
+  try {
+    const JSZip = await loadJSZip();
+    const zip = new JSZip();
+    const all = [];
+    for (const st of ['approved', 'pending', 'hidden']) (await listEntries(st)).forEach((e) => all.push({ ...e, st }));
+    if (!all.length) { alert('目前還沒有任何祝福可以下載。'); return; }
+    const rows = [['狀態', '名字', '留言', '類型', '上傳時間', '檔名'].map(csvCell).join(',')];
+    let i = 0;
+    for (const e of all) {
+      i += 1;
+      btn.textContent = `下載中 ${i} / ${all.length}`;
+      const ext = (e.mime || '').includes('webm') ? 'webm' : e.kind === 'video' ? 'mp4' : 'jpg';
+      const file = `${String(i).padStart(3, '0')}_${(e.name || '無名').replace(/[\\/:*?"<>|]/g, '')}.${ext}`;
+      try {
+        const blob = await (await fetch(e.url)).blob();
+        zip.folder(STATUS_ZH[e.st]).file(file, blob, { binary: true, compression: 'STORE' });
+      } catch { /* 單一檔案抓不到就略過，清單裡還是會留紀錄 */ }
+      rows.push([STATUS_ZH[e.st], e.name, e.message, e.kind === 'video' ? '影片' : '照片',
+        new Date(e.created_at).toLocaleString('zh-TW'), `${STATUS_ZH[e.st]}/${file}`].map(csvCell).join(','));
+    }
+    zip.file('祝福留言清單.csv', '\ufeff' + rows.join('\n'));   // 加 BOM，Excel 打開中文才不會亂碼
+    btn.textContent = '打包中…';
+    const out = await zip.generateAsync({ type: 'blob' });
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(out),
+      download: `${CONFIG.couple.replace(/\W+/g, '')}祝福_${new Date().toLocaleDateString('sv')}.zip`,
+    });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  } catch (err) {
+    alert(`下載失敗：${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+};
 
 async function enter() {
   $('login').hidden = true;

@@ -12,6 +12,11 @@
   header h1 { margin: 0; font-size: 2.4rem; }
   header .sub { font-size: .95rem; letter-spacing: .2em; }
   .screen-link { width: auto; min-height: 40px; padding: 8px 16px; font-size: .92rem; margin-left: auto; }
+  .screen-link + .screen-link { margin-left: 0; }
+  .toast { position: fixed; left: 50%; bottom: 24px; translate: -50% 0; z-index: 80; padding: 12px 20px; cursor: pointer;
+    background: var(--wine); color: var(--paper); border-radius: 999px; font-weight: 600; letter-spacing: .06em;
+    box-shadow: 0 8px 20px rgba(40,10,5,.35); animation: toast-in .35s ease both; }
+  @keyframes toast-in { from { opacity: 0; translate: -50% 12px; } }
   .usage { flex: 1 1 100%; display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--wine-soft); }
   .usage .meter { flex: 1; max-width: 240px; height: 6px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--line); }
   .usage .meter div { height: 100%; background: var(--brick); }
@@ -58,6 +63,7 @@
       <h1 class="script" data-couple></h1>
       <span class="sub">祝福審核</span>
       <a class="plaque screen-link" href="screen.html" target="_blank" rel="noopener">開啟祝福大螢幕</a>
+      <button class="plaque ghost screen-link" id="download-all" type="button" title="把所有影片、照片和留言清單打包成一個壓縮檔">全部下載</button>
       <div class="usage"><span>空間</span><div class="meter"><div id="meter"></div></div><span id="usage-text"></span></div>
     </header>
     <nav role="tablist">

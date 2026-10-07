@@ -9,6 +9,16 @@ document.querySelectorAll('[data-couple]').forEach((el) => (el.textContent = CON
 document.querySelectorAll('[data-date]').forEach((el) => (el.textContent = CONFIG.date));
 if (isDemo) document.body.insertAdjacentHTML('beforeend', '<div class="demo-banner">示範模式：資料只存在這台電腦</div>');
 
+// 在 IG、Facebook、LINE 等 App 裡面打開時，常常不能開相機：提醒改用 Safari／Chrome
+const UA = navigator.userAgent;
+const IN_APP = /Instagram|FBAN|FBAV|FB_IAB|Line\/|MicroMessenger|Threads/i.test(UA);
+if (IN_APP) {
+  const ios = /iPhone|iPad|iPod/.test(UA);
+  document.body.insertAdjacentHTML('afterbegin', `<div class="inapp-tip" role="status">
+    <b>相機可能打不開</b>：你是在 App 裡面打開這個網頁。<br>請點右上角「⋯」，選「${ios ? '在 Safari 中開啟' : '在瀏覽器中開啟'}」再錄影拍照。
+    <button type="button" aria-label="關閉提醒" onclick="this.parentElement.remove()">✕</button></div>`);
+}
+
 // 兩種首頁：預設是錄影拍照頁（QR code 連到這裡）；網址加 ?wall 是膠卷展示頁
 const RECORD = !new URLSearchParams(location.search).has('wall');
 document.body.classList.add(RECORD ? 'mode-record' : 'mode-show');
@@ -244,7 +254,7 @@ $('file-pick').onchange = async (e) => {
   if (file.type.startsWith('image/')) return usePhotoFile(file);
   const mb = file.size / 1024 / 1024;
   if (mb > CONFIG.maxUploadMB) {
-    alert(`這支影片 ${mb.toFixed(0)}MB，超過上限 ${CONFIG.maxUploadMB}MB。\n請改用「錄一段祝福影片」直接錄，檔案會小很多。`);
+    alert(`這支影片有 ${mb.toFixed(0)}MB，超過上限 ${CONFIG.maxUploadMB}MB。\n請改用「錄一段祝福影片」在這裡直接錄，檔案會小很多；或在相簿裡把影片剪短一點再選。`);
     return;
   }
   const secs = await videoDuration(file);
@@ -302,6 +312,42 @@ function toDetails() {
 $('msg').oninput = () => ($('count').textContent = `${$('msg').value.length} / 60`);
 $('back-home').onclick = () => { pending = null; show('s-home'); };
 
+// 上傳影片時順便做一張「橫排三格」的小縮圖（每格 240×300），膠卷頁直接拿來當動圖
+const SPRITE_W = 240, SPRITE_H = 300, SPRITE_TIMES = [0.4, 1.0, 1.6];
+function makeThumbSprite(blob) {
+  return new Promise((resolve) => {
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const c = Object.assign(document.createElement('canvas'), { width: SPRITE_W * 3, height: SPRITE_H });
+    const ctx = c.getContext('2d');
+    const url = URL.createObjectURL(blob);
+    let finished = false;
+    const done = (ok) => {
+      if (finished) return; finished = true;
+      URL.revokeObjectURL(url);
+      if (ok) c.toBlob((b) => resolve(b), 'image/jpeg', 0.75); else resolve(null);
+    };
+    const draw = (i) => {   // 置中裁成 4:5 畫進第 i 格
+      const vw = v.videoWidth, vh = v.videoHeight;
+      const scale = Math.max(SPRITE_W / vw, SPRITE_H / vh), sw = SPRITE_W / scale, sh = SPRITE_H / scale;
+      ctx.drawImage(v, (vw - sw) / 2, (vh - sh) / 2, sw, sh, i * SPRITE_W, 0, SPRITE_W, SPRITE_H);
+    };
+    v.onloadeddata = async () => {
+      if (!v.videoWidth) return done(false);
+      const max = isFinite(v.duration) && v.duration > 0 ? v.duration * 0.9 : Infinity;
+      for (let i = 0; i < 3; i++) {
+        const t = Math.min(SPRITE_TIMES[i], max === Infinity ? SPRITE_TIMES[i] : max * (i + 1) / 3);
+        await new Promise((r) => { v.onseeked = r; setTimeout(r, 2500); v.currentTime = t; });
+        draw(i);
+      }
+      done(true);
+    };
+    v.onerror = () => done(false);
+    setTimeout(() => done(false), 10000);
+    v.src = url;
+  });
+}
+
 $('form').onsubmit = async (e) => {
   e.preventDefault();
   const name = $('name').value.trim();
@@ -310,7 +356,8 @@ $('form').onsubmit = async (e) => {
   $('bar').style.width = '0';
   show('s-sending');
   try {
-    await addEntry({ name, message: $('msg').value.trim(), kind: pending.kind, blob: pending.blob },
+    const thumb = pending.kind === 'video' ? await makeThumbSprite(pending.blob).catch(() => null) : null;
+    await addEntry({ name, message: $('msg').value.trim(), kind: pending.kind, blob: pending.blob, thumb },
       (p) => ($('bar').style.width = `${Math.round(p * 100)}%`));
     prepareShare(pending);
     pending = null;
@@ -409,6 +456,17 @@ function videoFrames(e) {
   return thumbs.get(e.id);
 }
 
+// 有上傳時做好的三格縮圖就直接用（只下載幾十 KB）；舊資料沒有縮圖才退回從影片抓畫面
+function spriteOrFrames(e) {
+  if (!e.thumbUrl) return videoFrames(e);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ sprite: e.thumbUrl });
+    img.onerror = () => resolve(videoFrames(e));
+    img.src = e.thumbUrl;
+  });
+}
+
 async function loadFilm() {
   if (!strip) return;
   let items = [];
@@ -422,7 +480,7 @@ async function loadFilm() {
   $('film').hidden = false;
   document.body.classList.add('has-film');
 
-  const pics = await Promise.all(items.map((e) => (e.placeholder ? [] : e.kind === 'video' ? videoFrames(e) : [e.url])));
+  const pics = await Promise.all(items.map((e) => (e.placeholder ? [] : e.kind === 'video' ? spriteOrFrames(e) : [e.url])));
   const slot = (idx, win) => {
     const e = items[idx], [x, y, w, h] = win.map((v) => `${v * 100}%`);
     if (e.placeholder) {
@@ -430,7 +488,9 @@ async function loadFilm() {
         <span>這一格<br>等你的祝福</span></button>`;
     }
     return `<button class="slot" data-i="${idx}" style="left:${x};top:${y};width:${w};height:${h}" aria-label="${escHtml(e.name)} 的祝福">
-      ${pics[idx].map((src, f) => `<img class="${pics[idx].length > 1 ? `gif f${f}` : ''}" src="${escHtml(src)}" alt="">`).join('')}
+      ${pics[idx].sprite
+        ? `<span class="sprite3" style="background-image:url('${escHtml(pics[idx].sprite)}')"></span>`
+        : pics[idx].map((src, f) => `<img class="${pics[idx].length > 1 ? `gif f${f}` : ''}" src="${escHtml(src)}" alt="">`).join('')}
       ${e.kind === 'video' ? '<span class="vid">▶</span>' : ''}<span class="tag">${escHtml(e.name)}</span></button>`;
   };
   // 每條膠卷至少 3 段（9 格），祝福不夠就輪流重複；每條從不同的祝福開始

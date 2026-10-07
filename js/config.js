@@ -9,7 +9,7 @@ export const CONFIG = {
 
   videoMaxSeconds: 60,
   photoSeconds: 8,        // 大螢幕每張照片停留秒數
-  maxUploadMB: 45,        // Supabase 免費方案單檔上限 50MB
+  maxUploadMB: 20,        // 從相簿選的影片上限（網頁裡直接錄的 60 秒約 9MB）；免費空間只有 1GB
   transition: 'curtain',  // 過場動畫：curtain 布幕｜hang 掛畫｜spot 聚光燈
   musicUrl: '',           // 大螢幕背景音樂（mp3 網址），留空 = 不播
 

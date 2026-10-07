@@ -47,6 +47,27 @@ async function mediaUrl(entry) {
   }
 }
 
+// 開幕後在背景把所有已通過的影片、照片先下載存到這台電腦：會場網路斷掉也能繼續播
+const prefetched = new Set();
+let prefetching = false;
+async function prefetchAll(list) {
+  if (isDemo || !('caches' in window) || prefetching) return;
+  prefetching = true;
+  try {
+    const cache = await caches.open('wall-media');
+    for (const e of list) {
+      if (prefetched.has(e.url)) continue;
+      try {
+        if (!(await cache.match(e.url))) {
+          const res = await fetch(e.url);
+          if (res.ok) await cache.put(e.url, res);
+        }
+        prefetched.add(e.url);
+      } catch { /* 下次重新整理清單時再試 */ }
+    }
+  } finally { prefetching = false; }
+}
+
 /* ---------- 播放清單 ---------- */
 let approved = [];          // 依通過時間排序
 let known = null;           // 已知的 id（第一次載入前為 null）
@@ -61,6 +82,7 @@ async function refresh() {
   const ids = new Set(approved.map((e) => e.id));
   if (known) for (const id of ids) if (!known.has(id)) priority.push(id);
   known = ids;
+  prefetchAll(approved);
   $('count').textContent = `已通過 ${approved.length} 則祝福`;
   // 正在播的被撤下，就立刻換下一則
   if (started && (!playing || !ids.has(playing.id))) next();

@@ -56,14 +56,16 @@ const channel = 'BroadcastChannel' in window ? new BroadcastChannel('wedding-wal
 const demoUrls = new Map();
 function withDemoUrl(e) {
   if (!demoUrls.has(e.id)) demoUrls.set(e.id, URL.createObjectURL(e.blob));
-  const { blob, ...rest } = e;
-  return { ...rest, url: demoUrls.get(e.id) };
+  if (e.thumb && !demoUrls.has(`${e.id}:thumb`)) demoUrls.set(`${e.id}:thumb`, URL.createObjectURL(e.thumb));
+  const { blob, thumb, ...rest } = e;
+  return { ...rest, url: demoUrls.get(e.id), thumbUrl: demoUrls.get(`${e.id}:thumb`) || null };
 }
 
 /* ---------- 公開 API ---------- */
 const extFor = (mime) => (mime.includes('mp4') ? 'mp4' : mime.includes('webm') ? 'webm' : mime.includes('png') ? 'png' : 'jpg');
 
-export async function addEntry({ name, message, kind, blob }, onProgress) {
+// thumb：影片的 3 格縮圖（一張橫排三格的 JPEG），膠卷頁用它來做動圖，不用每個人都去下載影片
+export async function addEntry({ name, message, kind, blob, thumb }, onProgress) {
   const id = crypto.randomUUID();
   const mime = blob.type || (kind === 'video' ? 'video/mp4' : 'image/jpeg');
   const row = { id, name, message, kind, mime, size: blob.size };
@@ -71,12 +73,13 @@ export async function addEntry({ name, message, kind, blob }, onProgress) {
   if (isDemo) {
     // 假裝上傳進度，讓試作看得到進度條
     for (let p = 0; p <= 1; p += 0.1) { onProgress?.(p); await new Promise((r) => setTimeout(r, 120)); }
-    await idbDo('readwrite', (s) => s.put({ ...row, blob, status: 'pending', created_at: new Date().toISOString(), approved_at: null }));
+    await idbDo('readwrite', (s) => s.put({ ...row, blob, thumb: thumb || null, status: 'pending', created_at: new Date().toISOString(), approved_at: null }));
     channel?.postMessage('change');
     return;
   }
   const path = `${new Date().toISOString().slice(0, 10)}/${id}.${extFor(mime)}`;
   await xhrUpload(path, blob, mime, onProgress);
+  if (thumb) await xhrUpload(`${path}.thumb.jpg`, thumb, 'image/jpeg').catch(() => {});   // 縮圖失敗不影響送出
   const sb = await supabase();
   const { error } = await sb.from('entries').insert({ ...row, path });
   if (error) throw new Error('資料寫入失敗，請再試一次');
@@ -94,7 +97,7 @@ export async function listEntries(status) {
   const sb = await supabase();
   const { data, error } = await sb.from('entries').select('*').eq('status', status).order(orderKey, { ascending: true });
   if (error) throw error;
-  return data.map((e) => ({ ...e, url: publicUrl(e.path) }));
+  return data.map((e) => ({ ...e, url: publicUrl(e.path), thumbUrl: e.kind === 'video' ? publicUrl(`${e.path}.thumb.jpg`) : null }));
 }
 
 export async function setStatus(id, status) {
