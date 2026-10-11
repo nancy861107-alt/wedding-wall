@@ -11,13 +11,13 @@
   body.awake { cursor: url('deco/paw-cursor.png') 16 16, default; }   /* 滑鼠動的時候才出現貓掌游標 */
   body:not(.awake) .paw-cursor-el { opacity: 0; }   /* 滑鼠停著不動就把貓掌游標藏起來 */
 
-  .stage { position: fixed; inset: 0; z-index: 1; display: grid; grid-template-rows: 16vh minmax(0, 1fr) 15vh 2vh; justify-items: center; }
+  .stage { position: fixed; inset: 0; z-index: 1; display: grid; grid-template-rows: 12vh minmax(0, 1fr) 15vh 1vh; justify-items: center; }
   .heading { align-self: end; text-align: center; padding-bottom: 2vh; }
-  .heading .names { font-size: 7.5vh; margin: 0; }
+  .heading .names { font-size: 6.5vh; margin: 0; }
 
   /* 畫框區：每則祝福輪流換一個畫框素材（frames/frames.json） */
   /* --frame-scale：所有畫框的整體大小 */
-  .frame { --frame-scale: .92; position: relative; width: 62vw; height: 100%; min-height: 0; align-self: stretch; }
+  .frame { --frame-scale: .96; position: relative; width: 72vw; height: 100%; min-height: 0; align-self: stretch; }
   .slot { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 1.1s ease; }
   .slot.on { opacity: 1; }
   .fbox { position: relative; height: 100%; max-width: 100%; filter: drop-shadow(0 1.2vh 2vh rgba(60,15,10,.35)); }
@@ -27,15 +27,15 @@
   .win img, .win video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
   /* 照片：畫框先放大登場，再縮小讓出名字和祝福 */
-  .slot.photo .fbox { transform: scale(1.12); transition: transform 1.3s cubic-bezier(.6,0,.2,1); }
+  .slot.photo .fbox { transform: scale(1.05); transition: transform 1.3s cubic-bezier(.6,0,.2,1); }
   .slot.photo.settled .fbox { transform: scale(.86) translateY(-3%); }
   body.showing-photo .caption { translate: 0 -5vh; }
 
   /* 名字區固定高度，畫框才不會因為有沒有留言而上下跳 */
-  .caption { align-self: start; margin-top: .6vh; max-width: 56vw; text-align: center; transition: opacity .8s, translate 1.3s cubic-bezier(.6,0,.2,1); }
+  .caption { align-self: start; margin-top: .6vh; max-width: 64vw; text-align: center; transition: opacity .8s, translate 1.3s cubic-bezier(.6,0,.2,1); }
   .caption.fade { opacity: 0; }
-  .caption .who { font: 4.4vh/1.25 'LXGW WenKai TC', var(--zh); margin: 0; letter-spacing: .06em; }
-  .caption .msg { font: 2.7vh/1.6 'LXGW WenKai TC', var(--zh); color: var(--wine-soft); margin: .6vh 0 0; letter-spacing: .06em; }
+  .caption .who { font: 5.2vh/1.25 'LXGW WenKai TC', var(--zh); margin: 0; letter-spacing: .06em; }
+  .caption .msg { font: 3vh/1.5 'LXGW WenKai TC', var(--zh); color: var(--wine-soft); margin: .6vh 0 0; letter-spacing: .06em; }
   .caption .msg:empty { display: none; }
 
   .qr-card { position: fixed; right: 2.4vw; bottom: 3vh; z-index: 30; width: 13vh; padding: 1vh 1vh .7vh; text-align: center;

@@ -60,5 +60,41 @@
    0.7727,
    0.8161
   ]
+ },
+ {
+  "src": "frames/frame1-wide.png",
+  "mask": "frames/frame1-wide-mask.png",
+  "w": 816,
+  "h": 610,
+  "win": [
+   0.1189,
+   0.1459,
+   0.7672,
+   0.7033
+  ]
+ },
+ {
+  "src": "frames/frame4-wide.png",
+  "mask": "frames/frame4-wide-mask.png",
+  "w": 745,
+  "h": 582,
+  "win": [
+   0.0537,
+   0.0653,
+   0.8993,
+   0.8711
+  ]
+ },
+ {
+  "src": "frames/frame5-wide.png",
+  "mask": "frames/frame5-wide-mask.png",
+  "w": 892,
+  "h": 695,
+  "win": [
+   0.0942,
+   0.1151,
+   0.8161,
+   0.7727
+  ]
  }
 ]
