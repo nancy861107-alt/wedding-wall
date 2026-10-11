@@ -112,9 +112,29 @@ function fit(media) {
   media.style.objectFit = diff < 0.45 ? 'cover' : 'contain';
 }
 
-// 把媒體包進下一個畫框；沒有畫框素材時直接顯示
-function framed(inner) {
-  const f = frames[frameIndex++ % frames.length];
+// 先量出照片／影片的長寬比，好挑直式或橫式畫框；量不到就當直式
+function measure(url, kind) {
+  return new Promise((resolve) => {
+    const done = (w, h) => { clearTimeout(t); resolve(w && h ? w / h : 0.8); };
+    const t = setTimeout(() => done(0, 0), 4000);
+    if (kind === 'video') {
+      const v = Object.assign(document.createElement('video'), { preload: 'metadata', muted: true });
+      v.onloadedmetadata = () => done(v.videoWidth, v.videoHeight);
+      v.onerror = () => done(0, 0);
+      v.src = url;
+    } else {
+      const img = new Image();
+      img.onload = () => done(img.naturalWidth, img.naturalHeight);
+      img.onerror = () => done(0, 0);
+      img.src = url;
+    }
+  });
+}
+
+// 把媒體包進下一個畫框：橫拍的用橫式畫框，直拍的用直式或方形；沒有畫框素材時直接顯示
+function framed(inner, aspect) {
+  const pool = frames.filter((f) => (aspect > 1.1 ? f.w > f.h : f.w <= f.h * 1.05));
+  const f = pool[frameIndex++ % pool.length];
   if (!f) return `<div class="fbox" style="aspect-ratio:16/9"><div class="win" style="inset:0">${inner}</div></div>`;
   const [x, y, w, h] = f.win.map((v) => `${v * 100}%`);
   // dx：個別畫框的左右微調（畫框寬度的比例，負數往左）；scale：個別畫框縮放
@@ -275,12 +295,13 @@ async function showNext() {
   }
   playing = entry;
   const url = await mediaUrl(entry);
+  const aspect = await measure(url, entry.kind);
   const back = slots[1 - front];
   back.classList.remove('leave', 'enter', 'settled');
   back.classList.toggle('photo', entry.kind === 'photo');
   back.innerHTML = framed(entry.kind === 'video'
     ? `<video playsinline preload="auto"></video>`
-    : `<div class="bg"></div><img alt="">`);
+    : `<div class="bg"></div><img alt="">`, aspect);
   let media;
   if (entry.kind === 'video') {
     media = back.querySelector('video');
