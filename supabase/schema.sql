@@ -8,7 +8,7 @@ create table if not exists public.entries (
   message     text check (char_length(message) <= 60),
   kind        text not null check (kind in ('video', 'photo')),
   mime        text,
-  size        integer check (size <= 50 * 1024 * 1024),
+  size        integer check (size <= 25 * 1024 * 1024),
   path        text not null,
   status      text not null default 'pending' check (status in ('pending', 'approved', 'hidden')),
   approved_at timestamptz
@@ -33,9 +33,9 @@ create policy "staff update" on public.entries
 -- 即時通知
 alter publication supabase_realtime add table public.entries;
 
--- 2. 檔案空間（公開讀取，單檔 50MB，只收影片和照片）
+-- 2. 檔案空間（公開讀取，單檔 25MB，只收影片和照片；網頁上限 20MB，留一點餘裕）
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('media', 'media', true, 52428800,
+values ('media', 'media', true, 26214400,
         array['video/mp4', 'video/webm', 'video/quicktime', 'image/jpeg', 'image/png'])
 on conflict (id) do nothing;
 
