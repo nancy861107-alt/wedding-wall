@@ -10,7 +10,7 @@ export const isDemo = !CONFIG.supabaseUrl || q.has('demo') || (isLocal && !q.has
 /* ---------- Supabase ---------- */
 let sbPromise = null;
 function supabase() {
-  sbPromise ??= import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
+  sbPromise ??= import('../vendor/supabase-2.117.2.mjs')
     .then(({ createClient }) => createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey));
   return sbPromise;
 }

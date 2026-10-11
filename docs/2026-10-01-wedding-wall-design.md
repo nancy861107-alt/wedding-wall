@@ -21,7 +21,7 @@ Corner & Tsung 婚禮（2026-11-19）。賓客掃 QR code 錄祝福影片或拍�
 `js/store.js` 是唯一的資料層；`config.js` 的 `supabaseUrl` 留空時進入示範模式（IndexedDB + BroadcastChannel，同一台電腦多分頁即時同步）。
 
 ## 安全
-RLS：anon 只能 insert 狀態為 pending 的資料、只能 select approved；authenticated 可讀全部並更新狀態。Storage bucket 公開讀取，anon 只能上傳，單檔 50MB、限制 MIME。
+RLS：anon 只能 insert 狀態為 pending 的資料、只能 select approved；authenticated 可讀全部並更新狀態。Storage bucket 公開讀取，anon 只能上傳，單檔 25MB、限制 MIME。
 
 ## 免費方案限制對策
 - 1GB 空間：網頁內錄影控制 bitrate；後台顯示用量

@@ -116,13 +116,26 @@ const STATUS_ZH = { approved: '已通過', pending: '待審核', hidden: '已隱
 function loadJSZip() {
   return window.JSZip ? Promise.resolve(window.JSZip) : new Promise((resolve, reject) => {
     const sc = document.createElement('script');
-    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    sc.src = 'vendor/jszip-3.10.1.min.js';
     sc.onload = () => resolve(window.JSZip);
     sc.onerror = () => reject(new Error('下載工具載入失敗，請檢查網路'));
     document.head.append(sc);
   });
 }
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+// 抓不到就等一下再試，最多 3 次；回應不是 200 也算失敗，免得把錯誤訊息存成影片檔
+async function fetchBlob(url) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      return await res.blob();
+    } catch (err) {
+      if (attempt >= 3) throw err;
+      await new Promise((r) => setTimeout(r, attempt * 1500));
+    }
+  }
+}
 
 $('download-all').onclick = async () => {
   const btn = $('download-all');
@@ -135,19 +148,23 @@ $('download-all').onclick = async () => {
     const all = [];
     for (const st of ['approved', 'pending', 'hidden']) (await listEntries(st)).forEach((e) => all.push({ ...e, st }));
     if (!all.length) { alert('目前還沒有任何祝福可以下載。'); return; }
-    const rows = [['狀態', '名字', '留言', '類型', '上傳時間', '檔名'].map(csvCell).join(',')];
+    const rows = [['狀態', '名字', '留言', '類型', '上傳時間', '檔案'].map(csvCell).join(',')];
+    const missing = [];
     let i = 0;
     for (const e of all) {
       i += 1;
       btn.textContent = `下載中 ${i} / ${all.length}`;
       const ext = (e.mime || '').includes('webm') ? 'webm' : e.kind === 'video' ? 'mp4' : 'jpg';
       const file = `${String(i).padStart(3, '0')}_${(e.name || '無名').replace(/[\\/:*?"<>|]/g, '')}.${ext}`;
+      let saved = true;
       try {
-        const blob = await (await fetch(e.url)).blob();
-        zip.folder(STATUS_ZH[e.st]).file(file, blob, { binary: true, compression: 'STORE' });
-      } catch { /* 單一檔案抓不到就略過，清單裡還是會留紀錄 */ }
+        zip.folder(STATUS_ZH[e.st]).file(file, await fetchBlob(e.url), { binary: true, compression: 'STORE' });
+      } catch {
+        saved = false;   // 單一檔案抓不到就先略過，清單會標「缺檔」，最後再提醒
+        missing.push(`${STATUS_ZH[e.st]}：${e.name}`);
+      }
       rows.push([STATUS_ZH[e.st], e.name, e.message, e.kind === 'video' ? '影片' : '照片',
-        new Date(e.created_at).toLocaleString('zh-TW'), `${STATUS_ZH[e.st]}/${file}`].map(csvCell).join(','));
+        new Date(e.created_at).toLocaleString('zh-TW'), saved ? `${STATUS_ZH[e.st]}/${file}` : '缺檔（下載失敗）'].map(csvCell).join(','));
     }
     zip.file('祝福留言清單.csv', '\ufeff' + rows.join('\n'));   // 加 BOM，Excel 打開中文才不會亂碼
     btn.textContent = '打包中…';
@@ -158,6 +175,9 @@ $('download-all').onclick = async () => {
     });
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+    if (missing.length) {
+      alert(`有 ${missing.length} 個檔案沒下載成功，壓縮檔裡少了它們（清單裡標「缺檔」）：\n\n${missing.join('\n')}\n\n請確認網路後再按一次「全部下載」。`);
+    }
   } catch (err) {
     alert(`下載失敗：${err.message}`);
   } finally {
