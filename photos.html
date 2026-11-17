@@ -39,6 +39,8 @@
   /* 照片說明（photos.json 的 note）：寫在日期上面；有說明時日期縮小一點 */
   .caption .msg { font: 3.3vh/1.45 'LXGW WenKai TC', var(--zh); color: var(--wine); margin: 0 0 .5vh; letter-spacing: .06em; text-wrap: balance; word-break: keep-all; }   /* 只在空格處換行 */
   .caption .msg:empty { display: none; }
+  .caption .msg .ch { opacity: 0; transition: opacity .15s; }
+  .caption .msg .ch.on { opacity: 1; }
   .caption:has(.msg:not(:empty)) .who { font-size: 3.6vh; color: var(--wine-soft); }
 
   .qr-card { position: fixed; right: 2.4vw; bottom: 3vh; z-index: 30; width: 13vh; padding: 1vh 1vh .7vh; text-align: center;

@@ -268,7 +268,7 @@ addEventListener('resize', () => {
   resizeTimer = setTimeout(() => started && slots[front].classList.contains('on') && scatterDeco(slots[front]), 300);
 });
 
-let busy = false, again = false;
+let busy = false, again = false, typeToken = 0;
 async function next() {
   if (busy) { again = true; return; }
   busy = true;
@@ -314,7 +314,10 @@ async function showNext() {
   old.querySelectorAll('video').forEach((v) => { v.onended = v.onerror = null; v.pause(); });
   $('idle').style.opacity = 0;
   $('who').textContent = entry.name;
-  $('msg').textContent = entry.message || '';
+  // 說明文字先整段排好（隱形），之後一個字一個字浮現，排版才不會跳
+  const chars = [...(entry.message || '')];
+  $('msg').innerHTML = chars.map((c) => `<span class="ch">${c.replace(/[&<>]/g, (x) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[x])}</span>`).join('');
+  const typing = ++typeToken;
   back.classList.add('on');
   old.classList.remove('on');
   front = 1 - front;
@@ -335,6 +338,16 @@ async function showNext() {
     await wait(700);
   }
   $('card').classList.remove('fade');
+
+  // 打字效果：每個字約 0.11 秒；打完後才開始算停留秒數
+  if (chars.length) {
+    await wait(500);
+    for (const el of $('msg').querySelectorAll('.ch')) {
+      if (typing !== typeToken) return;            // 已經換下一張了
+      el.classList.add('on');
+      await wait(el.textContent.trim() ? 110 : 60);
+    }
+  }
 
   const cap = FAST ? 5 : Infinity;
   if (entry.kind === 'video') {
