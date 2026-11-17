@@ -36,8 +36,10 @@
   .caption { align-self: start; margin-top: .6vh; max-width: 64vw; text-align: center; transition: opacity .8s, translate 1.3s cubic-bezier(.6,0,.2,1); }
   .caption.fade { opacity: 0; }
   .caption .who { font: italic 500 5.4vh/1.25 'Cormorant Garamond', var(--zh); margin: 0; letter-spacing: .18em; }   /* 日期：優雅襯線斜體 */
-  .caption .msg { font: 3vh/1.5 'LXGW WenKai TC', var(--zh); color: var(--wine-soft); margin: .6vh 0 0; letter-spacing: .06em; }
+  /* 照片說明（photos.json 的 note）：寫在日期上面；有說明時日期縮小一點 */
+  .caption .msg { font: 4.2vh/1.4 'LXGW WenKai TC', var(--zh); color: var(--wine); margin: 0 0 .4vh; letter-spacing: .08em; }
   .caption .msg:empty { display: none; }
+  .caption:has(.msg:not(:empty)) .who { font-size: 3.6vh; color: var(--wine-soft); }
 
   .qr-card { position: fixed; right: 2.4vw; bottom: 3vh; z-index: 30; width: 13vh; padding: 1vh 1vh .7vh; text-align: center;
     background: var(--paper); border-radius: 2px; box-shadow: 0 0 0 1px var(--wine), 0 .8vh 2vh rgba(40,0,0,.35); }
@@ -112,7 +114,7 @@
     <div class="slot" id="slotA"></div>
     <div class="slot" id="slotB"></div>
   </div>
-  <div class="caption fade" id="card"><p class="who" id="who"></p><p class="msg" id="msg"></p></div>
+  <div class="caption fade" id="card"><p class="msg" id="msg"></p><p class="who" id="who"></p></div>
 </div>
 
 <div class="qr-card" id="qr-card" hidden><div data-qr></div><p>掃我留下祝福</p></div>
