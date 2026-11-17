@@ -26,7 +26,7 @@ addEventListener('mousemove', () => {
 
 /* ---------- 媒體快取：每個檔案只下載一次，重播不吃流量 ---------- */
 async function mediaUrl(entry) {
-  if (isDemo || !('caches' in window)) return entry.url;
+  if (isDemo || !('caches' in window) || new URL(entry.url).origin !== location.origin) return entry.url;
   try {
     const cache = await caches.open('wall-media');
     let res = await cache.match(entry.url);
@@ -45,6 +45,7 @@ async function mediaUrl(entry) {
 const prefetched = new Set();
 let prefetching = false;
 async function prefetchAll(list) {
+  list = list.filter((e) => new URL(e.url).origin === location.origin);   // 只有同網站的檔案能存進快取
   if (isDemo || !('caches' in window) || prefetching) return;
   prefetching = true;
   try {
@@ -79,6 +80,8 @@ async function refresh() {
     });
   } catch { return; }
   prefetchAll(approved);
+  // 外部相簿（Google 相簿）的照片不能存進快取，先用 <img> 全部預載，讓瀏覽器自己留著
+  for (const e of approved) if (e.kind === 'photo' && new URL(e.url).origin !== location.origin) new Image().src = e.url;
 }
 
 function pick() {
