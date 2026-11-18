@@ -21,10 +21,11 @@
   .frame { --frame-scale: .96; position: relative; width: 72vw; height: 100%; min-height: 0; align-self: stretch; }
   .slot { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 1.1s ease; }
   .slot.on { opacity: 1; }
-  .fbox { position: relative; height: 100%; max-width: 100%; filter: drop-shadow(0 1.2vh 2vh rgba(60,15,10,.35)); }
+  .fbox { position: relative; height: 100%; max-width: 100%; filter: drop-shadow(0 1.2vh 2vh rgba(60,15,10,.35)); will-change: transform; }   /* 獨立圖層：縮放時不用每格重畫陰影 */
   .fbox .fimg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .win { position: absolute; overflow: hidden; background: #1d0f0d; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
-  .win .bg { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(24px) brightness(.6) saturate(1.1); }
+  /* 模糊背景：先縮成 1/8 大小再模糊、放大，效果一樣但電視算得動 */
+  .win .bg { position: absolute; left: -5%; top: -5%; width: 13.75%; height: 13.75%; transform: scale(8); transform-origin: 0 0; background: center / cover no-repeat; filter: blur(3px) brightness(.6) saturate(1.1); }
   .win img, .win video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
   /* 照片：畫框先放大登場，再縮小讓出名字和祝福 */

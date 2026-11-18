@@ -306,6 +306,8 @@ async function showNext() {
     media = back.querySelector('.win img');
     media.onload = () => fit(media);
     media.src = url;
+    // 先在背景把大照片解碼好，換場時才不會卡一下
+    await media.decode?.().catch(() => {});
   }
 
   await fxOut(old, entry.name);
@@ -365,16 +367,15 @@ async function showNext() {
 /* ---------- 開幕 ---------- */
 let started = false;
 const drape = createDrape($('drape'), { lines: 24, spread: [0.13, 0.05, 0.15], gather: 0.55 });
-$('start').onclick = () => {
+$('start').onclick = async () => {
   $('start').classList.add('gone');
-  drape.open(3200);
+  const opened = drape.open(3200);
   document.documentElement.requestFullscreen?.().catch(() => {});
   if (CONFIG.musicUrl) { music.src = CONFIG.musicUrl; music.volume = 0.55; music.play().catch(() => {}); }
-  setTimeout(() => {
-    started = true;
-    $('qr-card').hidden = params.has('noqr');   // ?noqr 可以把右下角 QR code 藏起來
-    next();
-  }, 3000);
+  await opened;                                  // 布幕完全拉開後才放第一張，兩件事不搶效能
+  started = true;
+  $('qr-card').hidden = params.has('noqr');     // ?noqr 可以把右下角 QR code 藏起來
+  next();
 };
 
 await refresh();
