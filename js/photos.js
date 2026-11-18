@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 import './ornament.js';
 import './paw.js';
-import { createDrapeLite } from './drape-lite.js';
+import { createDrape } from './drape.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -399,7 +399,7 @@ async function showNext() {
 
 /* ---------- 開幕 ---------- */
 let started = false;
-const drape = createDrapeLite($('drape'), { lines: 24, spread: [0.13, 0.05, 0.15], gather: 0.55 });
+const drape = createDrape($('drape'), { lines: 24, spread: [0.13, 0.05, 0.15], gather: 0.55 });
 $('start').onclick = async () => {
   $('start').classList.add('gone');
   const opened = drape.open(3200);
