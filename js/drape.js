@@ -32,7 +32,10 @@ export function createDrape(host, { lines = 15, color = '#8a1c17', ink = 'rgba(2
       <g clip-path="url(#${clipId})"><g class="shade"></g></g>
       <g class="lines" fill="none" stroke="${ink}" stroke-linecap="round"></g>`;
     svg.append(g);
-    return { side, g };
+    // 線條和陰影只建立一次，之後每一格只改座標（不再每格重建整段 HTML，電視上比較順）
+    const lineEls = Array.from({ length: lines }, () => g.querySelector('.lines').appendChild(document.createElementNS(NS, 'path')));
+    const shade = g.querySelector('.shade').appendChild(document.createElementNS(NS, 'ellipse'));
+    return { side, g, shapes: [...g.querySelectorAll('.shape')], lineEls, shade };
   });
 
   // 一條線從上到下的路徑：top x → 收束點 x → 底部 x
@@ -46,7 +49,7 @@ export function createDrape(host, { lines = 15, color = '#8a1c17', ink = 'rgba(2
     const k = ease(Math.min(1, Math.max(0, t)));
     const half = W / 2;
     const yMid = lerp(H * 0.6, H * gather, k);
-    for (const { side, g } of panels) {
+    for (const { side, shapes, lineEls, shade } of panels) {
       const dir = side === 'left' ? 1 : -1;
       const x0 = side === 'left' ? 0 : W;
       // 關閉：每片佔半個畫面；打開：上方剩 30%，收束點 12%，底部張開到 34%
@@ -58,20 +61,21 @@ export function createDrape(host, { lines = 15, color = '#8a1c17', ink = 'rgba(2
 
       const edge = linePath(X(1, topW), X(1, midW), X(1, botW), yMid, [0, 0, 0], 0);
       const shape = `M${x0} 0 L${X(1, topW)} 0 ` + edge.replace(/^M[^C]+/, '') + ` L${x0} ${H} Z`;
-      g.querySelectorAll('.shape').forEach((p) => p.setAttribute('d', shape));
+      shapes.forEach((p) => p.setAttribute('d', shape));
 
-      let ls = '';
       for (let i = 1; i <= lines; i++) {
         const f = spots[i];
         const w = wobble[i];
-        ls += `<path stroke-width="${(w[3] * (1 - k * 0.3)).toFixed(2)}" d="${linePath(X(f, topW), X(f, midW), X(f, botW), yMid, w, amp)}"/>`;
+        const el = lineEls[i - 1];
+        el.setAttribute('stroke-width', (w[3] * (1 - k * 0.3)).toFixed(2));
+        el.setAttribute('d', linePath(X(f, topW), X(f, midW), X(f, botW), yMid, w, amp));
       }
-      g.querySelector('.lines').innerHTML = ls;
 
       // 收束處的陰影
-      g.querySelector('.shade').innerHTML = k > 0.02
-        ? `<ellipse cx="${X(1, midW)}" cy="${yMid}" rx="${W * 0.06}" ry="${H * 0.1}" fill="rgba(40,0,0,${(0.18 * k).toFixed(2)})"/>`
-        : '';
+      shade.setAttribute('display', k > 0.02 ? 'inline' : 'none');
+      shade.setAttribute('cx', X(1, midW)); shade.setAttribute('cy', yMid);
+      shade.setAttribute('rx', W * 0.06); shade.setAttribute('ry', H * 0.1);
+      shade.setAttribute('fill', `rgba(40,0,0,${(0.18 * k).toFixed(2)})`);
 
     }
   }
