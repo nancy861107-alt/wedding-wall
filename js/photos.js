@@ -169,6 +169,7 @@ $('music-file').onchange = (e) => {
 };
 $('music-pick').addEventListener('click', (e) => e.stopPropagation());
 if (!musicSrc) musicStore('readonly', (st) => st.get('song')).then((f) => f && useMusicFile(f));
+else { $('music-name').textContent = '♪ La La Land 鋼琴（點這裡可換一首）'; $('music-pick').classList.add('has'); }
 
 function duck(on) {
   if (!musicSrc) return;
