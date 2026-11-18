@@ -138,8 +138,40 @@ function framed(inner, aspect) {
 let front = 0, timer = null;
 const music = $('music');
 
+/* ---------- 背景音樂：在開幕畫面選這台電腦裡的音樂檔（不會上傳到網路），會記在這台電腦 ---------- */
+let musicSrc = new URLSearchParams(location.search).get('music') || CONFIG.coupleMusicUrl || '';
+const MUSIC_DB = 'couple-music';
+function musicStore(mode, fn) {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(MUSIC_DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('files');
+      req.onsuccess = () => {
+        const tx = req.result.transaction('files', mode);
+        const r = fn(tx.objectStore('files'));
+        tx.oncomplete = () => resolve(r?.result);
+        tx.onerror = () => resolve(null);
+      };
+      req.onerror = () => resolve(null);
+    } catch { resolve(null); }
+  });
+}
+function useMusicFile(file) {
+  if (!file) return;
+  musicSrc = URL.createObjectURL(file);
+  $('music-name').textContent = `♪ ${file.name}`;
+  $('music-pick').classList.add('has');
+}
+$('music-file').onchange = (e) => {
+  const file = e.target.files[0];
+  useMusicFile(file);
+  musicStore('readwrite', (st) => st.put(file, 'song'));
+};
+$('music-pick').addEventListener('click', (e) => e.stopPropagation());
+if (!musicSrc) musicStore('readonly', (st) => st.get('song')).then((f) => f && useMusicFile(f));
+
 function duck(on) {
-  if (!CONFIG.musicUrl) return;
+  if (!musicSrc) return;
   const target = on ? 0.06 : 0.55;
   const step = () => {
     const d = target - music.volume;
@@ -371,7 +403,8 @@ $('start').onclick = async () => {
   $('start').classList.add('gone');
   const opened = drape.open(3200);
   document.documentElement.requestFullscreen?.().catch(() => {});
-  if (CONFIG.musicUrl) { music.src = CONFIG.musicUrl; music.volume = 0.55; music.play().catch(() => {}); }
+  $('music-pick').hidden = true;
+  if (musicSrc) { music.src = musicSrc; music.volume = 0.55; music.play().catch(() => {}); }
   await opened;                                  // 布幕完全拉開後才放第一張，兩件事不搶效能
   started = true;
   $('qr-card').hidden = params.has('noqr');     // ?noqr 可以把右下角 QR code 藏起來

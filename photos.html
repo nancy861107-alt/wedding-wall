@@ -102,6 +102,11 @@
   .start p { margin: 0; font-size: 2.4vh; letter-spacing: .4em; animation: breathe 2.4s ease-in-out infinite; }
   .start.gone { opacity: 0; pointer-events: none; }
   @keyframes breathe { 50% { opacity: .35; } }
+  /* 開幕畫面下方的選音樂按鈕：選的是這台電腦裡的檔案，不會上傳 */
+  .music-pick { position: fixed; left: 50%; bottom: 6vh; translate: -50% 0; z-index: 61; padding: 1vh 2.4vh; border: 1px solid rgba(248,228,206,.5); border-radius: 999px;
+    color: var(--cream); font: 2vh var(--zh); letter-spacing: .1em; opacity: .7; cursor: pointer; transition: opacity .3s; }
+  .music-pick:hover, .music-pick.has { opacity: 1; }
+  .music-pick[hidden] { display: none; }
   .count-badge { position: fixed; left: 2.4vw; bottom: 3vh; z-index: 21; font: 1.6vh var(--serif); color: var(--cream); opacity: 0; transition: opacity .4s; }
   body.awake .count-badge { opacity: .9; }
 </style>
@@ -130,6 +135,7 @@
   <h1 class="names script" data-couple></h1>
   <p>點一下開幕</p>
 </button>
+<label class="music-pick" id="music-pick"><input type="file" id="music-file" accept="audio/*" hidden><span id="music-name">♪ 選擇背景音樂（選填）</span></label>
 <audio id="music" loop preload="auto"></audio>
 
 <script src="vendor/qrcode-generator-1.4.4.js"></script>
